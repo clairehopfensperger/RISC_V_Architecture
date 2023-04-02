@@ -17,8 +17,12 @@ The goal of this project is to explore a non-traditional computer architecture a
 - (Very very simply put) Create processor on an FPGA using Quartus and Verilog (but maybe VHDL if I'm motivated enough to learn and mess around with that) that will execute the Tiny RISC-V ISA and C benchmarks
 <br>
 
+## What I'm Working On Now:
+- Creating [benchmarks](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Benchmarks) to test all the Tiny RISC-V instructions
+<br>
+
 ## What I've Done So Far:
-- Created [benchmarks](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Benchmarks) to test all the Tiny RISC-V instructions
+- Read through the Tiny RISC-V ISA and worked to understand it
 <br>
 
 ## Resources:
