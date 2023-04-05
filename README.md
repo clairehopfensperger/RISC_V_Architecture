@@ -13,8 +13,15 @@ The goal of this project is to explore a non-traditional computer architecture a
 ## My Plan:
 - Read through and understand Tiny RISC-V ISA
 - Practice creating programs with RISC-V on RARS
-- Make RISC-V benchmarks that cover all of the Tiny RISC-V ISA
+- Make RISC-V benchmark(s) that cover all of the Tiny RISC-V ISA
 - (Very very simply put) Create processor on an FPGA using Quartus and Verilog (but maybe VHDL if I'm motivated enough to learn and mess around with that) that will execute the Tiny RISC-V ISA and C benchmarks
+<br>
+
+Regarding last step:
+- Make up my own encoding rules
+- Create ALU that executes different instructions
+- Create register file that covers all registers
+- Create control that connects everything
 <br>
 
 ## What I'm Working On Now:
