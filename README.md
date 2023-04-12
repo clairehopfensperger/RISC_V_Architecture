@@ -25,12 +25,12 @@ Regarding last step:
 <br>
 
 ## What I'm Working On Now:
-- Creating ALU module in verilog
+- Creating [ALU module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/ALU) in verilog
+<br>
 
 ## What I've Done So Far:
 - Read through the Tiny RISC-V ISA and worked to understand it
 - Created assembly [benchmarks](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Benchmarks) to test all the Tiny RISC-V instructions
-<br>
 <br>
 
 ## Resources:
