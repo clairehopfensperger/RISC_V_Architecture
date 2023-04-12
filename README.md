@@ -18,18 +18,19 @@ The goal of this project is to explore a non-traditional computer architecture a
 <br>
 
 Regarding last step:
-- Make up my own encoding rules
+- Decide on encoding rules to use (I decided on using the Tiny RISC-V ISA encoding)
 - Create ALU that executes different instructions
 - Create register file that covers all registers
 - Create control that connects everything
 <br>
 
 ## What I'm Working On Now:
-- Creating [benchmarks](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Benchmarks) to test all the Tiny RISC-V instructions
-<br>
+- Creating ALU module in verilog
 
 ## What I've Done So Far:
 - Read through the Tiny RISC-V ISA and worked to understand it
+- Created assembly [benchmarks](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Benchmarks) to test all the Tiny RISC-V instructions
+<br>
 <br>
 
 ## Resources:
