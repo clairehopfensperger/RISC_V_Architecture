@@ -33,7 +33,7 @@ module ALU (
 			rs1 = code[19:15];
 			rs2 = code[24:20];
 			
-			// ADD/SUB ?
+			// ADD/SUB/MUL
 			if (funct3 == 3'b000)
 			begin
 				
@@ -42,9 +42,68 @@ module ALU (
 					rd = rs1 + rs2;
 				
 				// SUB
-				if (funct7 == 7'b0100000)
+				else if (funct7 == 7'b0100000)
 					rd = rs1 - rs2;
 					
+				// MUL
+				else if (funct7 == 7'b0000001)
+					rd = rs1 * rs2;
+					
+			end
+			
+			// SRA/SRL
+			else if (funct3 == 3'b101)
+			begin
+				
+				// SRA
+				if (funct7 == 7'b0100000);
+					
+				
+				// SRL
+				else if (funct7 == 7'b0000000)
+					rd = rs1 >> rs2;
+					
+			end
+			
+			// Bitwise ops, comparisons that result in 0/1, SLL
+			else if (funct7 == 7'b0000000)
+			begin
+				
+				// AND
+				if (funct3 == 3'b111)
+					rd = rs1 & rs2;
+				
+				// OR
+				else if (funct3 == 3'b110)
+					rd = rs1 | rs2;
+				
+				// XOR
+				else if (funct3 == 3'b100)
+					rd = rs1 ^ rs2;
+				
+				// SLT
+				else if (funct3 == 3'b010)
+				begin
+				
+					if (rs1[4] == 1'b1 && rs2[4] == 1'b0)
+						rd = 5'd1;
+					
+					else if (rs1[4] == 1'b0 && rs2[4] == 1'b1)
+						rd = 5'd0;
+						
+					else 
+						rd = rs1[1] < rs2[2];
+				
+				end
+				
+				// SLTU
+				else if (funct3 == 3'b011)
+					rd = rs1[1] < rs2[2];
+				
+				// SLL
+				else if (funct3 == 3'b001)
+					rd = rs1 << rs2;
+				
 			end
 			
 		end
