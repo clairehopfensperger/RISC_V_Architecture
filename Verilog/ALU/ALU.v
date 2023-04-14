@@ -3,18 +3,32 @@ module ALU (
 	output reg [4:0]rd
 	);
 	
+//----------------------------------------------------------------------------	
+//
 // R-Type:
 // 
 // 31         25 24     20 19     15 14  12 11      7 6            0
 //	+------------+---------+---------+------+---------+-------------+
 //	| funct7     | rs2     | rs1     |funct3| rd      | opcode      |
 //	+------------+---------+---------+------+---------+-------------+
+//
+//
+// I-Type:
+//
+// 31                   20 19     15 14  12 11      7 6            0
+// +----------------------+---------+------+---------+-------------+
+// | imm                  | rs1     |funct3| rd      | opcode      |
+// +----------------------+---------+------+---------+-------------+
+//	
+//-----------------------------------------------------------------------------	
 	
 	reg [6:0]opcode;
 	reg [6:0]funct7;
 	reg [2:0]funct3;
 	reg [11:0]imm;
 	
+	// I MESSED UP: the registers use 5 bits to say which reg it is bc there are 32 of them, 
+	// but Tiny RISC-V ISA says each reg is 32 bits wide (i want to do 16 bits wide)
 	reg [4:0]rs1;
 	reg [4:0]rs2;
 	
@@ -56,8 +70,19 @@ module ALU (
 			begin
 				
 				// SRA
-				if (funct7 == 7'b0100000);
-					
+				if (funct7 == 7'b0100000)
+				begin
+				
+					if (rs1[4] == 1'b1)
+					begin
+						rs1 = -rs1;
+						rd = rs1 >>> rs2;
+						rd = -rd;
+					end
+					else
+						rd = rs1 >>> rs2;
+				
+				end
 				
 				// SRL
 				else if (funct7 == 7'b0000000)
@@ -112,8 +137,63 @@ module ALU (
 		else if (opcode == 7'b0010011)
 		begin
 		
-			funct3 = code[14:12];
 			imm = code[31:20];
+			funct3 = code[14:12];
+			
+			rs1 = code[19:15];
+			
+			// ADDI
+			if (funct3 == 3'b000)
+				rd = rs1 + imm;
+				
+			// SRAI/SRLI/SLLI shift ops
+			else if (funct3 == 3'b101 || funct3 == 3'b001)
+			begin
+			
+				funct7 = code[31:25];
+				imm = code[24:20];
+				
+				
+				if (funct3 == 3'b101)
+				begin
+				
+					// SRAI
+					if (funct7 == 7'b0100000);
+					
+					// SRLI
+					else if(funct7 == 7'b0000000);
+				
+				end
+				
+				// SLII
+				else if (funct3 == 3'b001);
+				
+				
+			end
+			
+			// imm Bitwise ops, comparisons that result in 0/1
+			else
+			begin
+			
+				// ANDI
+				if (funct3 == 3'b111)
+					rd = rs1 & imm;
+				
+				// ORI
+				else if (funct3 == 3'b110)
+					rd = rs1 | imm;
+					
+				// XORI
+				else if (funct3 == 3'b100)
+					rd = rs1 ^ imm;
+					
+				// SLTI
+				else if(funct3 == 3'b010);
+				
+				// SLTIU
+				else if(funct3 == 3'b011);
+			
+			end
 		
 		end
 	end
