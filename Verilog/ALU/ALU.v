@@ -1,7 +1,12 @@
 module ALU (
 	input [31:0]code,
-	// input [31:0]PC, // maybe do 16 bits?
-	output reg [4:0]rd
+	//input [31:0]PC,
+	
+	input [31:0]rs1_og,  // testing
+	input [31:0]rs2_og,  // testing
+	
+	//output reg [15:0]PC_new,
+	output reg [31:0]rd  // testing
 	);
 	
 	reg [6:0]opcode;
@@ -9,16 +14,19 @@ module ALU (
 	reg [2:0]funct3;
 	reg [11:0]imm;
 	
-	// I MESSED UP: the registers use 5 bits to say which reg it is bc there are 32 of them, 
-	// but Tiny RISC-V ISA says each reg is 32 bits wide (i want to do 16 bits wide)
-	reg [4:0]rs1;
-	reg [4:0]rs2;
+	reg [31:0]rs1;
+	reg [31:0]rs2;
+	//reg [31:0]rd;  // outputing for test rn
 	
 	// need to get values from registers in a function somehow (aka by using RF module)
 	
 	// executing arithmetic ops
 	always @(*)
 	begin
+		
+		// for testing?
+		rs1 = rs1_og[31:0];
+		rs2 = rs2_og[31:0];
 		
 		opcode = code[6:0];
 	
@@ -39,9 +47,6 @@ module ALU (
 			
 			funct7 = code[31:25];
 			funct3 = code[14:12];
-			
-			rs1 = code[19:15];
-			rs2 = code[24:20];
 			
 			// ADD/SUB/MUL
 			if (funct3 == 3'b000)
@@ -69,7 +74,7 @@ module ALU (
 				if (funct7 == 7'b0100000)
 				begin
 				
-					if (rs1[4] == 1'b1)
+					if (rs1[31] == 1'b1)
 					begin
 						rs1 = -rs1;
 						rd = rs1 >>> rs2;
@@ -106,20 +111,20 @@ module ALU (
 				else if (funct3 == 3'b010)
 				begin
 				
-					if (rs1[4] == 1'b1 && rs2[4] == 1'b0)
-						rd = 5'd1;
+					if (rs1[31] == 1'b1 && rs2[31] == 1'b0)
+						rd = 32'd1;
 					
-					else if (rs1[4] == 1'b0 && rs2[4] == 1'b1)
-						rd = 5'd0;
+					else if (rs1[31] == 1'b0 && rs2[31] == 1'b1)
+						rd = 32'd0;
 						
 					else 
-						rd = rs1[1] < rs2[2];
+						rd = (rs1 < rs2);  // haven't tested
 				
 				end
 				
 				// SLTU
 				else if (funct3 == 3'b011)
-					rd = rs1[1] < rs2[2];
+					rd = (rs1 < rs2);  // haven't tested
 				
 				// SLL
 				else if (funct3 == 3'b001)
@@ -146,7 +151,7 @@ module ALU (
 			imm = code[31:20];
 			funct3 = code[14:12];
 			
-			rs1 = code[19:15];
+			//rs1 = code[19:15];
 			
 			// ADDI
 			if (funct3 == 3'b000)
@@ -167,7 +172,7 @@ module ALU (
 					if (funct7 == 7'b0100000)
 					begin
 				
-						if (rs1[4] == 1'b1)
+						if (rs1[31] == 1'b1)
 						begin
 							rs1 = -rs1;
 							rd = rs1 >>> imm;
@@ -213,20 +218,20 @@ module ALU (
 				else if(funct3 == 3'b010)
 				begin
 				
-					if (rs1[4] == 1'b1 && imm[4] == 1'b0)
-						rd = 5'd1;
+					if (rs1[31] == 1'b1 && imm[11] == 1'b0)
+						rd = 32'd1;
 					
-					else if (rs1[4] == 1'b0 && imm[4] == 1'b1)
-						rd = 5'd0;
+					else if (rs1[31] == 1'b0 && imm[11] == 1'b1)
+						rd = 32'd0;
 						
 					else 
-						rd = rs1[1] < imm[2];
+						rd = (rs1 < imm);  // haven't tested
 				
 				end
 				
 				// SLTIU
 				else if(funct3 == 3'b011)
-					rd = rs1[1] < imm[2];
+					rd = (rs1 < imm);  // haven't tested 
 					
 			end
 		
@@ -255,12 +260,6 @@ module ALU (
 		
 			
 		
-		end
-		
-		// do i put branch stuff in here? i think so
-		// branches woot woot
-		else if (opcode == 7'b1100011)
-		begin
 		end
 		
 	end
