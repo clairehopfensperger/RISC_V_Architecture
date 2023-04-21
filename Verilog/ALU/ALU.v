@@ -1,34 +1,25 @@
 module ALU (
-	input [31:0]code,
-	//input [31:0]PC,
+	input [6:0]opcode,
+	input [6:0]funct7,
+	input [2:0]funct3,
+	input [11:0]imm,
 	
-	input [31:0]rs1_og,  // testing
-	input [31:0]rs2_og,  // testing
+	input [31:0]rs1_val,
+	input [31:0]rs2_val,
 	
-	//output reg [15:0]PC_new,
-	output reg [31:0]rd  // testing
+	output reg [31:0]rd_val
 	);
-	
-	reg [6:0]opcode;
-	reg [6:0]funct7;
-	reg [2:0]funct3;
-	reg [11:0]imm;
 	
 	reg [31:0]rs1;
 	reg [31:0]rs2;
-	//reg [31:0]rd;  // outputing for test rn
-	
-	// need to get values from registers in a function somehow (aka by using RF module)
 	
 	// executing arithmetic ops
 	always @(*)
 	begin
 		
-		// for testing?
-		rs1 = rs1_og[31:0];
-		rs2 = rs2_og[31:0];
-		
-		opcode = code[6:0];
+		// have these bc have to be able to do -rs1 or -rs2 for two's comp later
+		rs1 = rs1_val[31:0];
+		rs2 = rs2_val[31:0];
 	
 		//----------------------------------------------------------------------------	
 		//
@@ -36,7 +27,7 @@ module ALU (
 		// 
 		// 31         25 24     20 19     15 14  12 11      7 6            0
 		//	+------------+---------+---------+------+---------+-------------+
-		//	| funct7     | rs2     | rs1     |funct3| rd      | opcode      |
+		//	| funct7     | rs2     | rs1     |funct3| rd_val  | opcode      |
 		//	+------------+---------+---------+------+---------+-------------+
 		//
 		//----------------------------------------------------------------------------
@@ -45,24 +36,21 @@ module ALU (
 		if (opcode == 7'b0110011)
 		begin
 			
-			funct7 = code[31:25];
-			funct3 = code[14:12];
-			
 			// ADD/SUB/MUL
 			if (funct3 == 3'b000)
 			begin
 				
 				// ADD
 				if (funct7 == 7'b0000000)
-					rd = rs1 + rs2;
+					rd_val = rs1 + rs2;
 				
 				// SUB
 				else if (funct7 == 7'b0100000)
-					rd = rs1 - rs2;
+					rd_val = rs1 - rs2;
 					
 				// MUL
 				else if (funct7 == 7'b0000001)
-					rd = rs1 * rs2;
+					rd_val = rs1 * rs2;
 					
 			end
 			
@@ -77,17 +65,17 @@ module ALU (
 					if (rs1[31] == 1'b1)
 					begin
 						rs1 = -rs1;
-						rd = rs1 >>> rs2;
-						rd = -rd;
+						rd_val = rs1 >>> rs2;
+						rd_val = -rd_val;
 					end
 					else
-						rd = rs1 >>> rs2;
+						rd_val = rs1 >>> rs2;
 				
 				end
 				
 				// SRL
 				else if (funct7 == 7'b0000000)
-					rd = rs1 >> rs2;
+					rd_val = rs1 >> rs2;
 					
 			end
 			
@@ -97,38 +85,38 @@ module ALU (
 				
 				// AND
 				if (funct3 == 3'b111)
-					rd = rs1 & rs2;
+					rd_val = rs1 & rs2;
 				
 				// OR
 				else if (funct3 == 3'b110)
-					rd = rs1 | rs2;
+					rd_val = rs1 | rs2;
 				
 				// XOR
 				else if (funct3 == 3'b100)
-					rd = rs1 ^ rs2;
+					rd_val = rs1 ^ rs2;
 				
 				// SLT
 				else if (funct3 == 3'b010)
 				begin
 				
 					if (rs1[31] == 1'b1 && rs2[31] == 1'b0)
-						rd = 32'd1;
+						rd_val = 32'd1;
 					
 					else if (rs1[31] == 1'b0 && rs2[31] == 1'b1)
-						rd = 32'd0;
+						rd_val = 32'd0;
 						
 					else 
-						rd = (rs1 < rs2);  // haven't tested
+						rd_val = (rs1 < rs2);  // haven't tested
 				
 				end
 				
 				// SLTU
 				else if (funct3 == 3'b011)
-					rd = (rs1 < rs2);  // haven't tested
+					rd_val = (rs1 < rs2);  // haven't tested
 				
 				// SLL
 				else if (funct3 == 3'b001)
-					rd = rs1 << rs2;
+					rd_val = rs1 << rs2;
 				
 			end
 			
@@ -139,7 +127,7 @@ module ALU (
 		//
 		// 31                   20 19     15 14  12 11      7 6            0
 		// +----------------------+---------+------+---------+-------------+
-		// | imm                  | rs1     |funct3| rd      | opcode      |
+		// | imm                  | rs1     |funct3| rd_val  | opcode      |
 		// +----------------------+---------+------+---------+-------------+
 		//	
 		//-----------------------------------------------------------------------------	
@@ -148,23 +136,14 @@ module ALU (
 		else if (opcode == 7'b0010011)
 		begin
 		
-			imm = code[31:20];
-			funct3 = code[14:12];
-			
-			//rs1 = code[19:15];
-			
 			// ADDI
 			if (funct3 == 3'b000)
-				rd = rs1 + imm;
+				rd_val = rs1 + imm;
 				
 			// SRAI/SRLI/SLLI shift ops
 			else if (funct3 == 3'b101 || funct3 == 3'b001)
 			begin
 			
-				funct7 = code[31:25];
-				imm = code[24:20];
-				
-				
 				if (funct3 == 3'b101)
 				begin
 				
@@ -175,23 +154,23 @@ module ALU (
 						if (rs1[31] == 1'b1)
 						begin
 							rs1 = -rs1;
-							rd = rs1 >>> imm;
-							rd = -rd;
+							rd_val = rs1 >>> imm;
+							rd_val = -rd_val;
 						end
 						else
-							rd = rs1 >>> imm;
+							rd_val = rs1 >>> imm;
 				
 					end
 					
 					// SRLI
 					else if(funct7 == 7'b0000000)
-						rd = rs1 >> imm;
+						rd_val = rs1 >> imm;
 						
 				end
 				
 				// SLLI
 				else if (funct3 == 3'b001)
-					rd = rs1 << imm;
+					rd_val = rs1 << imm;
 				
 			end
 			
@@ -201,15 +180,15 @@ module ALU (
 			
 				// ANDI
 				if (funct3 == 3'b111)
-					rd = rs1 & imm;
+					rd_val = rs1 & imm;
 				
 				// ORI
 				else if (funct3 == 3'b110)
-					rd = rs1 | imm;
+					rd_val = rs1 | imm;
 					
 				// XORI
 				else if (funct3 == 3'b100)
-					rd = rs1 ^ imm;
+					rd_val = rs1 ^ imm;
 					
 				// !!! For SLTI and SLTIU, imm is supposed to be sign extended to
 				// 32 bits (but I'll do 16 bits) - maybe make function to do that?
@@ -219,19 +198,19 @@ module ALU (
 				begin
 				
 					if (rs1[31] == 1'b1 && imm[11] == 1'b0)
-						rd = 32'd1;
+						rd_val = 32'd1;
 					
 					else if (rs1[31] == 1'b0 && imm[11] == 1'b1)
-						rd = 32'd0;
+						rd_val = 32'd0;
 						
 					else 
-						rd = (rs1 < imm);  // haven't tested
+						rd_val = (rs1 < imm);  // haven't tested
 				
 				end
 				
 				// SLTIU
 				else if(funct3 == 3'b011)
-					rd = (rs1 < imm);  // haven't tested 
+					rd_val = (rs1 < imm);  // haven't tested 
 					
 			end
 		
@@ -241,7 +220,7 @@ module ALU (
 		// 
 		// 31                                    12 11      7 6            0
 		// +---------------------------------------+---------+-------------+
-		// | imm                                   | rd      | 0110111     |
+		// | imm                                   | rd_val  | 0110111     |
 		// +---------------------------------------+---------+-------------+
 		// 
 		//-----------------------------------------------------------------------------
