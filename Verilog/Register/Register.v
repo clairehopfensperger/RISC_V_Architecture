@@ -1,9 +1,9 @@
-module Register{
+module Register(
 	input clk, rst,
 	input [31:0]in,
 	input en,
 	output reg [31:0]out
-};
+);
 
 always @(posedge clk or negedge rst)
 begin
