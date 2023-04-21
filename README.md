@@ -26,8 +26,8 @@ Regarding last step:
 
 ## What I'm Working On Now:
 - Creating [ALU module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/ALU) in verilog
-- Creating [Register file module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/Register)
-- Creating Control module
+- Creating [Register module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/Register) in verilog
+- Creating [Control module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/Control) in verilog
 - Updating [spreadsheet](https://docs.google.com/spreadsheets/d/1bzJ4BtNq0zZRE7lfEwL_Z8MmB-xBc6bV8E7DlgN-na4/edit#gid=0) as I implement more instructions
 <br>
 
