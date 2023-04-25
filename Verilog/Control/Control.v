@@ -4,6 +4,21 @@ module Control(
 	output reg done
 );
 
+//----------------------------------------------------------------------------
+// TO DO:
+// - Figure out compiler error: "Error (10228): Verilog HDL error at 
+//		instructions_mem_bb.v(35): module "instructions_mem" cannot be declared 
+//		more than once
+// - Figure out how to display that the control works
+//		- Testbench?
+//		- Seven seg. display?
+// - Test control with super simple tests listed below in inst. mem. section
+// - Create separate on chip memory for main memory (lw/sw)
+// - Implement LUI and maybe other one
+// - Do tons more testing
+//----------------------------------------------------------------------------
+
+
 	reg [31:0]instruction;
 	reg [7:0]PC; // should it be 32 bits?
 
@@ -27,7 +42,8 @@ module Control(
 	// ALU instantiation ----------------------------------------------------------------------------
 	
 	reg [4:0]rs1, rs2, rd;
-	reg [31:0]rs1_val, rs2_val, rd_val;
+	reg [31:0]rs1_val, rs2_val;
+	wire [31:0]rd_val;
 	reg [11:0]imm;
 	reg [6:0]funct7;
 	reg [2:0]funct3;
@@ -45,7 +61,7 @@ module Control(
 		output reg [31:0]rd_val
 	*/
 	
-	alu my_alu(opcode, funct7, funct3, imm, rs1_val, rs2_val, rd_val);
+	ALU my_alu(opcode, funct7, funct3, imm, rs1_val, rs2_val, rd_val);
 	
 	// Register instantiation ----------------------------------------------------------------------------
 	
@@ -85,52 +101,52 @@ module Control(
 	
 	// in
 	reg [31:0]in_zero, in_ra, in_sp, in_gp, in_tp, in_t0, in_t1, in_t2, in_s0, in_s1, in_a0, in_a1, in_a2, 
-		in_a3, in_a4, in_a5, in_a6, in_a7, in_s2, in_s3, in_s4, in_s5, in_s6, in_s7, in_s8, in_s9, in_S10, in_s11, 
+		in_a3, in_a4, in_a5, in_a6, in_a7, in_s2, in_s3, in_s4, in_s5, in_s6, in_s7, in_s8, in_s9, in_s10, in_s11, 
 		in_t3, in_t4, in_t5, in_t6;
 	
 	// en
 	reg [31:0]en_zero, en_ra, en_sp, en_gp, en_tp, en_t0, en_t1, en_t2, en_s0, en_s1, en_a0, en_a1, en_a2, 
-		en_a3, en_a4, en_a5, en_a6, en_a7, en_s2, en_s3, en_s4, en_s5, en_s6, en_s7, en_s8, en_s9, en_S10, en_s11, 
+		en_a3, en_a4, en_a5, en_a6, en_a7, en_s2, en_s3, en_s4, en_s5, en_s6, en_s7, en_s8, en_s9, en_s10, en_s11, 
 		en_t3, en_t4, en_t5, en_t6;
 	
 	// result
 	wire [31:0]result_zero, result_ra, result_sp, result_gp, result_tp, result_t0, result_t1, result_t2, result_s0, 
 		result_s1, result_a0, result_a1, result_a2, result_a3, result_a4, result_a5, result_a6, result_a7, result_s2, 
-		result_s3, result_s4, result_s5, result_s6, result_s7, result_s8, result_s9, result_S10, result_s11, result_t3, 
+		result_s3, result_s4, result_s5, result_s6, result_s7, result_s8, result_s9, result_s10, result_s11, result_t3, 
 		result_t4, result_t5, result_t6;
 	
-	Register zero(clk, rst, 32'd0, 1'b1, result_zero);
-	Register ra(clk, rst, in_ra, en_ra, result_ra);
-	Register sp(clk, rst, in_sp, en_sp, result_sp);
-	Register gp(clk, rst, in_gp, en_gp, result_gp);
-	Register tp(clk, rst, in_tp, en_tp, result_tp);
-	Register t0(clk, rst, in_t0, en_t0, result_t0);
-	Register t1(clk, rst, in_t1, en_t1, result_t1);
-	Register t2(clk, rst, in_t2, en_t2, result_t2);
-	Register s0(clk, rst, in_s0, en_s0, result_s0);
-	Register s1(clk, rst, in_s1, en_s1, result_s1);
-	Register a0(clk, rst, in_a0, en_a0, result_a0);
-	Register a1(clk, rst, in_a1, en_a1, result_a1);
-	Register a2(clk, rst, in_a2, en_a2, result_a2);
-	Register a3(clk, rst, in_a3, en_a3, result_a3);
-	Register a4(clk, rst, in_a4, en_a4, result_a4);
-	Register a5(clk, rst, in_a5, en_a5, result_a5);
-	Register a6(clk, rst, in_a6, en_a6, result_a6);
-	Register a7(clk, rst, in_a7, en_a7, result_a7);
-	Register s2(clk, rst, in_s2, en_s2, result_s2);
-	Register s3(clk, rst, in_s3, en_s3, result_s3);
-	Register s4(clk, rst, in_s4, en_s4, result_s4);
-	Register s5(clk, rst, in_s5, en_s5, result_s5);
-	Register s6(clk, rst, in_s6, en_s6, result_s6);
-	Register s7(clk, rst, in_s7, en_s7, result_s7);
-	Register s8(clk, rst, in_s8, en_s8, result_s8);
-	Register s9(clk, rst, in_s9, en_s9, result_s9);
-	Register s10(clk, rst, in_s10, en_s10, result_s10);
-	Register s11(clk, rst, in_s11, en_s11, result_s11);
-	Register t3(clk, rst, in_t3, en_t3, result_t3);
-	Register t4(clk, rst, in_t4, en_t4, result_t4);
-	Register t5(clk, rst, in_t5, en_t5, result_t5);
-	Register t6(clk, rst, in_t6, en_t6, result_t6);
+	Register reg_zero(clk, rst, 32'd0, 1'b1, result_zero);
+	Register reg_ra(clk, rst, in_ra, en_ra, result_ra);
+	Register reg_sp(clk, rst, in_sp, en_sp, result_sp);
+	Register reg_gp(clk, rst, in_gp, en_gp, result_gp);
+	Register reg_tp(clk, rst, in_tp, en_tp, result_tp);
+	Register reg_t0(clk, rst, in_t0, en_t0, result_t0);
+	Register reg_t1(clk, rst, in_t1, en_t1, result_t1);
+	Register reg_t2(clk, rst, in_t2, en_t2, result_t2);
+	Register reg_s0(clk, rst, in_s0, en_s0, result_s0);
+	Register reg_s1(clk, rst, in_s1, en_s1, result_s1);
+	Register reg_a0(clk, rst, in_a0, en_a0, result_a0);
+	Register reg_a1(clk, rst, in_a1, en_a1, result_a1);
+	Register reg_a2(clk, rst, in_a2, en_a2, result_a2);
+	Register reg_a3(clk, rst, in_a3, en_a3, result_a3);
+	Register reg_a4(clk, rst, in_a4, en_a4, result_a4);
+	Register reg_a5(clk, rst, in_a5, en_a5, result_a5);
+	Register reg_a6(clk, rst, in_a6, en_a6, result_a6);
+	Register reg_a7(clk, rst, in_a7, en_a7, result_a7);
+	Register reg_s2(clk, rst, in_s2, en_s2, result_s2);
+	Register reg_s3(clk, rst, in_s3, en_s3, result_s3);
+	Register reg_s4(clk, rst, in_s4, en_s4, result_s4);
+	Register reg_s5(clk, rst, in_s5, en_s5, result_s5);
+	Register reg_s6(clk, rst, in_s6, en_s6, result_s6);
+	Register reg_s7(clk, rst, in_s7, en_s7, result_s7);
+	Register reg_s8(clk, rst, in_s8, en_s8, result_s8);
+	Register reg_s9(clk, rst, in_s9, en_s9, result_s9);
+	Register reg_s10(clk, rst, in_s10, en_s10, result_s10);
+	Register reg_s11(clk, rst, in_s11, en_s11, result_s11);
+	Register reg_t3(clk, rst, in_t3, en_t3, result_t3);
+	Register reg_t4(clk, rst, in_t4, en_t4, result_t4);
+	Register reg_t5(clk, rst, in_t5, en_t5, result_t5);
+	Register reg_t6(clk, rst, in_t6, en_t6, result_t6);
 	
 	parameter	
 		zero = 5'd0,
@@ -174,7 +190,7 @@ module Control(
 	parameter
 		INIT = 5'd0,
 		FETCH_1 = 5'd1,
-		FETCH_2 = 5'd8,  // may not need but idk
+		FETCH_2 = 5'd8,
 		FETCH_DELAY = 5'd2,
 		DECODE_1 = 5'd3,
 		DECODE_2 = 5'd9,
@@ -182,9 +198,11 @@ module Control(
 		EXECUTE = 5'd4,
 		EXECUTE_DELAY = 5'd5,
 		WRITEBACK = 5'd6,
+		WRITEBACK_2 = 5'd11,
+		DISPLAY = 5'd12,
 		DONE = 5'd7,
 		ERROR = 5'hF;
-		// latest number used is 5'd10
+		// latest number used is 5'd12
 	
 	// Changing states
 	always @(posedge clk or negedge rst)
@@ -201,22 +219,23 @@ module Control(
 	always @(*)
 	begin
 		case(S)
-			INIT: NS = FETCH;
+			INIT: NS = FETCH_1;
 			FETCH_1: NS = FETCH_2;
 			FETCH_2: NS = FETCH_DELAY;
 			FETCH_DELAY:
 			begin
-				if (instruction = 32'd0)
+				if (instruction == 32'd0)
 					NS = DONE;
 				else 
-					NS = DECODE;
+					NS = DECODE_1;
 			end
 			DECODE_1: NS = DECODE_2;
 			DECODE_2: NS = DECODE_3;
 			DECODE_3: NS = EXECUTE;
 			EXECUTE: NS = EXECUTE_DELAY;
 			EXECUTE_DELAY: NS = WRITEBACK;
-			WRITEBACK: NS = FETCH;
+			WRITEBACK: NS = WRITEBACK_2;
+			WRITEBACK_2: NS = FETCH_1;
 			DONE: NS = DONE;
 			default: NS = ERROR;
 		endcase
@@ -232,7 +251,7 @@ module Control(
 			
 			inst_mem_address <= 32'd0;
 			inst_mem_input <= 32'd0;
-			wren <= 1'b0;
+			inst_mem_wren <= 1'b0;
 			
 			rs1 <= 5'd0;
 			rs2 <= 5'd0;
@@ -245,8 +264,7 @@ module Control(
 		end
 		else
 		begin
-			case(S):
-				
+			case(S)
 				INIT:
 				begin
 					PC <= 32'd0;
@@ -254,7 +272,10 @@ module Control(
 					
 					inst_mem_address <= 32'd0;
 					inst_mem_input <= 32'd0;
-					wren <= 1'b0;
+					inst_mem_wren <= 1'b0;
+					
+					rs1_val <= 32'd0;
+					rs2_val <= 32'd0;
 					
 					rs1 <= 5'd0;
 					rs2 <= 5'd0;
@@ -351,7 +372,7 @@ module Control(
 				DECODE_3:
 				begin
 					// put values in rs1_val, rs2_val
-					case(rs1):
+					case(rs1)
 						zero: rs1_val <= result_zero;
 						ra: rs1_val <= result_ra;
 						sp: rs1_val <= result_sp;
@@ -389,7 +410,7 @@ module Control(
 						end
 					endcase
 						
-					case(rs2):
+					case(rs2)
 						zero: rs2_val <= result_zero;
 						ra: rs2_val <= result_ra;
 						sp: rs2_val <= result_sp;
@@ -440,7 +461,7 @@ module Control(
 				WRITEBACK:
 				begin
 					// put rd_val in rd
-					case(rd):
+					case(rd)
 						zero:
 						begin
 							en_zero <= 1'b1;
@@ -448,163 +469,204 @@ module Control(
 						end
 						ra: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_ra <= 1'b1;
+							in_ra <= rd_val;
 						end
 						sp: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_sp <= 1'b1;
+							in_sp <= rd_val;
 						end
 						gp:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_gp <= 1'b1;
+							in_gp <= rd_val;
 						end
 						tp: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_tp <= 1'b1;
+							in_tp <= rd_val;
 						end
 						t0:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t0 <= 1'b1;
+							in_t0 <= rd_val;
 						end
 						t1: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t1 <= 1'b1;
+							in_t1 <= rd_val;
 						end
 						t2:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t2 <= 1'b1;
+							in_t2 <= rd_val;
 						end
 						s0: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s0 <= 1'b1;
+							in_s0 <= rd_val;
 						end
 						s1: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s1 <= 1'b1;
+							in_s1 <= rd_val;
 						end
 						a0: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a0 <= 1'b1;
+							in_a0 <= rd_val;
 						end
 						a1:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a1 <= 1'b1;
+							in_a1 <= rd_val;
 						end
 						a2:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a2 <= 1'b1;
+							in_a2 <= rd_val;
 						end
 						a3:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a3 <= 1'b1;
+							in_a3 <= rd_val;
 						end
 						a4:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a4 <= 1'b1;
+							in_a4 <= rd_val;
 						end
 						a5:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a5 <= 1'b1;
+							in_a5 <= rd_val;
 						end
 						a6: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a6 <= 1'b1;
+							in_a6 <= rd_val;
 						end
 						a7: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_a7 <= 1'b1;
+							in_a7 <= rd_val;
 						end
 						s2: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s2 <= 1'b1;
+							in_s2 <= rd_val;
 						end
 						s3:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s3 <= 1'b1;
+							in_s3 <= rd_val;
 						end
 						s4: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s4 <= 1'b1;
+							in_s4 <= rd_val;
 						end
 						s5:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s5 <= 1'b1;
+							in_s5 <= rd_val;
 						end
 						s6:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s6 <= 1'b1;
+							in_s6 <= rd_val;
 						end
 						s7:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s7 <= 1'b1;
+							in_s7 <= rd_val;
 						end
 						s8: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s8 <= 1'b1;
+							in_s8 <= rd_val;
 						end
 						s9:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s9 <= 1'b1;
+							in_s9 <= rd_val;
 						end
 						s10:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s10 <= 1'b1;
+							in_s10 <= rd_val;
 						end
 						s11: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_s11 <= 1'b1;
+							in_s11 <= rd_val;
 						end
 						t3:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t3 <= 1'b1;
+							in_t3 <= rd_val;
 						end
 						t4: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t4 <= 1'b1;
+							in_t4 <= rd_val;
 						end
 						t5:
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t5 <= 1'b1;
+							in_t5 <= rd_val;
 						end
 						t6: 
 						begin
-							en_zero <= 1'b1;
-							in_zero <= rd_val;
+							en_t6 <= 1'b1;
+							in_t6 <= rd_val;
 						end
 						default:
 						begin
 						end
 					endcase
+				end
+				
+				WRITEBACK_2:
+				begin
+					// put all enables back to 0
+					en_zero <= 1'b0;
+					en_ra <= 1'b0;
+					en_sp <= 1'b0;
+					en_gp <= 1'b0;
+					en_tp <= 1'b0;
+					en_t0 <= 1'b0;
+					en_t1 <= 1'b0;
+					en_t2 <= 1'b0;
+					en_s0 <= 1'b0;
+					en_s1 <= 1'b0;
+					en_a0 <= 1'b0;
+					en_a1 <= 1'b0;
+					en_a2 <= 1'b0;
+					en_a3 <= 1'b0;
+					en_a4 <= 1'b0;
+					en_a5 <= 1'b0;
+					en_a6 <= 1'b0;
+					en_a7 <= 1'b0;
+					en_s2 <= 1'b0;
+					en_s3 <= 1'b0;
+					en_s4 <= 1'b0;
+					en_s5 <= 1'b0;
+					en_s6 <= 1'b0;
+					en_s7 <= 1'b0;
+					en_s8 <= 1'b0;
+					en_s9 <= 1'b0;
+					en_s10 <= 1'b0;
+					en_s11 <= 1'b0;
+					en_t3 <= 1'b0;
+					en_t4 <= 1'b0;
+					en_t5 <= 1'b0;
+					en_t6 <= 1'b0;
+				end
+				
+				DISPLAY:
+				begin
 				end
 				
 				DONE:
