@@ -2,6 +2,19 @@ module Control(
 	input clk, rst,
 	input start,
 	output reg done
+	
+	// displaying PC count
+	output [6:0]PC_seg7,
+
+	// displaying rd name (display s10 as 10, display s11 as 11)
+	output [6:0]rd_seg7_msb,
+	output [6:0]rd_seg7_lsb,
+
+	// displaying rd val
+	output [6:0]rd_val_seg7_neg,
+	output [6:0]rd_val_seg7_hund,
+	output [6:0]rd_val_seg7_ten,
+	output [6:0]rd_val_seg7_one
 );
 
 //----------------------------------------------------------------------------
@@ -62,6 +75,12 @@ module Control(
 	*/
 	
 	ALU my_alu(opcode, funct7, funct3, imm, rs1_val, rs2_val, rd_val);
+	
+	// Seven segment instantiation ----------------------------------------------------------------------------
+
+	reg [6:0]void;
+	
+	seven_seg_display disp_sev_seg(PC, rd, rd_val, PC_seg7, rd_seg7_msb, rd_seg7_lsb, rd_val_seg7_neg, rd_val_seg7_hund, rd_val_seg7_ten, rd_val_seg7_one, void);
 	
 	// Register instantiation ----------------------------------------------------------------------------
 	
@@ -663,10 +682,13 @@ module Control(
 					en_t4 <= 1'b0;
 					en_t5 <= 1'b0;
 					en_t6 <= 1'b0;
+					
+					PC <= PC + 8'd1;
 				end
 				
 				DISPLAY:
 				begin
+					
 				end
 				
 				DONE:
