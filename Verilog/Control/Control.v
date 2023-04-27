@@ -3,26 +3,24 @@ module Control(
 	input start,
 	output reg done
 	
-	// displaying PC count
-	output [6:0]PC_seg7,
-
-	// displaying rd name (display s10 as 10, display s11 as 11)
-	output [6:0]rd_seg7_msb,
-	output [6:0]rd_seg7_lsb,
-
-	// displaying rd val
-	output [6:0]rd_val_seg7_neg,
-	output [6:0]rd_val_seg7_hund,
-	output [6:0]rd_val_seg7_ten,
-	output [6:0]rd_val_seg7_one
+//	// displaying PC count
+//	output [6:0]PC_seg7,
+//
+//	// displaying rd name (display s10 as 10, display s11 as 11)
+//	output [6:0]rd_seg7_msb,
+//	output [6:0]rd_seg7_lsb,
+//
+//	// displaying rd val
+//	output [6:0]rd_val_seg7_neg,
+//	output [6:0]rd_val_seg7_hund,
+//	output [6:0]rd_val_seg7_ten,
+//	output [6:0]rd_val_seg7_one
 );
 
 //----------------------------------------------------------------------------
 // TO DO:
-// - Figure out compiler error: "Error (10228): Verilog HDL error at 
-//		instructions_mem_bb.v(35): module "instructions_mem" cannot be declared 
-//		more than once
 // - Figure out how to display that the control works
+//		- Signal tap - recommended by Jamieson, need to use FPGA board
 //		- Testbench?
 //		- Seven seg. display?
 // - Test control with super simple tests listed below in inst. mem. section
@@ -42,15 +40,21 @@ module Control(
 	wire [31:0]inst_mem_output;
 	reg inst_mem_wren;  // never writing to memory, always set to 1'b0
 
-	instructions_mem inst_mem(inst_mem_address, clk, inst_mem_input, 1'b0, inst_mem_output);
+	instructions_mem inst_mem_instantiation(inst_mem_address, clk, inst_mem_input, 1'b0, inst_mem_output);
 	
 	// What's in it rn:
-	// addi t0, zero, 5 : 32'b(imm)000000000100 00000 000 00101 0010011 = 32'd4194963
-	// addi t1, zero, 5 : 32'b(imm)000000000011 00000 000 00110 0010011 = 32'd3146515
+	// add t0, zero, 5 : 32'b(imm)000000000100 00000 000 00101 0010011 = 32'd4194963
+	// add t1, zero, 5 : 32'b(imm)000000000011 00000 000 00110 0010011 = 32'd3146515
 	// add t2, t0, t1 : 32'b0000000 00110 00101 000 00111 0010011 = 32'd6456211
 	
 	// !!! main memory instantiation ----------------------------------------------------------------------------
-	// create separate on chip memory for this
+	
+	reg [7:0]main_mem_address;
+	reg [31:0]main_mem_input;
+	wire [31:0]main_mem_output;
+	reg main_mem_wren;
+
+	main_mem main_mem_instantiation(main_mem_address, clk, main_mem_input, main_mem_wren, main_mem_output);
 	
 	// ALU instantiation ----------------------------------------------------------------------------
 	
@@ -78,9 +82,11 @@ module Control(
 	
 	// Seven segment instantiation ----------------------------------------------------------------------------
 
-	reg [6:0]void;
+	// Dr. Jamieson does NOT recommend doing this. He recommends using signal tap
 	
-	seven_seg_display disp_sev_seg(PC, rd, rd_val, PC_seg7, rd_seg7_msb, rd_seg7_lsb, rd_val_seg7_neg, rd_val_seg7_hund, rd_val_seg7_ten, rd_val_seg7_one, void);
+//	reg [6:0]void;
+//	
+//	seven_seg_display disp_sev_seg(PC, rd, rd_val, PC_seg7, rd_seg7_msb, rd_seg7_lsb, rd_val_seg7_neg, rd_val_seg7_hund, rd_val_seg7_ten, rd_val_seg7_one, void);
 	
 	// Register instantiation ----------------------------------------------------------------------------
 	
@@ -218,10 +224,9 @@ module Control(
 		EXECUTE_DELAY = 5'd5,
 		WRITEBACK = 5'd6,
 		WRITEBACK_2 = 5'd11,
-		DISPLAY = 5'd12,
 		DONE = 5'd7,
 		ERROR = 5'hF;
-		// latest number used is 5'd12
+		// latest number used is 5'd11
 	
 	// Changing states
 	always @(posedge clk or negedge rst)
@@ -238,7 +243,13 @@ module Control(
 	always @(*)
 	begin
 		case(S)
-			INIT: NS = FETCH_1;
+			INIT: 
+			begin
+				if (start == 1'b1)
+					NS = FETCH_1;
+				else
+					NS = INIT;
+			end
 			FETCH_1: NS = FETCH_2;
 			FETCH_2: NS = FETCH_DELAY;
 			FETCH_DELAY:
@@ -279,29 +290,80 @@ module Control(
 			funct7 <= 7'd0;
 			funct3 <= 3'd0;
 			
-			// need to initialize in_reg and en_reg
+			done <= 1'b0;
+			
+			en_zero <= 1'b0;
+					en_ra <= 1'b0;
+					en_sp <= 1'b0;
+					en_gp <= 1'b0;
+					en_tp <= 1'b0;
+					en_t0 <= 1'b0;
+					en_t1 <= 1'b0;
+					en_t2 <= 1'b0;
+					en_s0 <= 1'b0;
+					en_s1 <= 1'b0;
+					en_a0 <= 1'b0;
+					en_a1 <= 1'b0;
+					en_a2 <= 1'b0;
+					en_a3 <= 1'b0;
+					en_a4 <= 1'b0;
+					en_a5 <= 1'b0;
+					en_a6 <= 1'b0;
+					en_a7 <= 1'b0;
+					en_s2 <= 1'b0;
+					en_s3 <= 1'b0;
+					en_s4 <= 1'b0;
+					en_s5 <= 1'b0;
+					en_s6 <= 1'b0;
+					en_s7 <= 1'b0;
+					en_s8 <= 1'b0;
+					en_s9 <= 1'b0;
+					en_s10 <= 1'b0;
+					en_s11 <= 1'b0;
+					en_t3 <= 1'b0;
+					en_t4 <= 1'b0;
+					en_t5 <= 1'b0;
+					en_t6 <= 1'b0;
+					
+					in_zero <= 1'b0;
+					in_ra <= 1'b0;
+					in_sp <= 1'b0;
+					in_gp <= 1'b0;
+					in_tp <= 1'b0;
+					in_t0 <= 1'b0;
+					in_t1 <= 1'b0;
+					in_t2 <= 1'b0;
+					in_s0 <= 1'b0;
+					in_s1 <= 1'b0;
+					in_a0 <= 1'b0;
+					in_a1 <= 1'b0;
+					in_a2 <= 1'b0;
+					in_a3 <= 1'b0;
+					in_a4 <= 1'b0;
+					in_a5 <= 1'b0;
+					in_a6 <= 1'b0;
+					in_a7 <= 1'b0;
+					in_s2 <= 1'b0;
+					in_s3 <= 1'b0;
+					in_s4 <= 1'b0;
+					in_s5 <= 1'b0;
+					in_s6 <= 1'b0;
+					in_s7 <= 1'b0;
+					in_s8 <= 1'b0;
+					in_s9 <= 1'b0;
+					in_s10 <= 1'b0;
+					in_s11 <= 1'b0;
+					in_t3 <= 1'b0;
+					in_t4 <= 1'b0;
+					in_t5 <= 1'b0;
+					in_t6 <= 1'b0;
 		end
 		else
 		begin
 			case(S)
 				INIT:
 				begin
-					PC <= 32'd0;
-					instruction <= 32'd0;
 					
-					inst_mem_address <= 32'd0;
-					inst_mem_input <= 32'd0;
-					inst_mem_wren <= 1'b0;
-					
-					rs1_val <= 32'd0;
-					rs2_val <= 32'd0;
-					
-					rs1 <= 5'd0;
-					rs2 <= 5'd0;
-					rd <= 5'd0;
-					imm <= 12'd0;
-					funct7 <= 7'd0;
-					funct3 <= 3'd0;
 				end
 				
 				FETCH_1:
@@ -373,6 +435,17 @@ module Control(
 					begin
 						imm <= instruction[31:12];
 					end
+					
+				//-----------------------------------------------------------------------------
+				// Branches:
+				//
+				// 31         25 24     20 19     15 14  12 11      7 6            0
+				// +------------+---------+---------+------+---------+-------------+
+				// | imm        | rs2     | rs1     | 000  | imm     | 1100011     |
+				// +------------+---------+---------+------+---------+-------------+
+				//
+				//-----------------------------------------------------------------------------
+				
 				end
 				
 				DECODE_2:
@@ -471,6 +544,7 @@ module Control(
 				EXECUTE:
 				begin	
 					// do ALU stuff or memory stuff
+					
 				end
 				
 				EXECUTE_DELAY:
@@ -686,13 +760,9 @@ module Control(
 					PC <= PC + 8'd1;
 				end
 				
-				DISPLAY:
-				begin
-					
-				end
-				
 				DONE:
 				begin
+					done <= 1'b1;
 				end
 				
 				default:
