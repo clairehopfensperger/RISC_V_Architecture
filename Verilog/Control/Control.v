@@ -43,8 +43,8 @@ module Control(
 	instructions_mem inst_mem_instantiation(inst_mem_address, clk, inst_mem_input, 1'b0, inst_mem_output);
 	
 	// What's in it rn:
-	// add t0, zero, 5 : 32'b(imm)000000000100 00000 000 00101 0010011 = 32'd4194963
-	// add t1, zero, 5 : 32'b(imm)000000000011 00000 000 00110 0010011 = 32'd3146515
+	// addi t0, zero, 5 : 32'b(imm)000000000100 00000 000 00101 0010011 = 32'd4194963
+	// addi t1, zero, 5 : 32'b(imm)000000000011 00000 000 00110 0010011 = 32'd3146515
 	// add t2, t0, t1 : 32'b0000000 00110 00101 000 00111 0010011 = 32'd6456211
 	
 	// !!! main memory instantiation ----------------------------------------------------------------------------
