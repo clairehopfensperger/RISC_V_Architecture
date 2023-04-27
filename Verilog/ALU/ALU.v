@@ -228,15 +228,13 @@ module ALU (
 		// LUI
 		else if (opcode == 7'b0110111)
 		begin
-		
-			
-		
+			rd_val = (imm << 12) & rd_val;		
 		end
 		
 		// AUIPC
 		else if (opcode == 7'b0010111)
 		begin
-		
+			
 			
 		
 		end
