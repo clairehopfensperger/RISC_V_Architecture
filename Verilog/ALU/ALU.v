@@ -190,9 +190,6 @@ module ALU (
 				else if (funct3 == 3'b100)
 					rd_val = rs1 ^ imm;
 					
-				// !!! For SLTI and SLTIU, imm is supposed to be sign extended to
-				// 32 bits (but I'll do 16 bits) - maybe make function to do that?
-					
 				// SLTI
 				else if(funct3 == 3'b010)
 				begin
@@ -204,13 +201,13 @@ module ALU (
 						rd_val = 32'd0;
 						
 					else 
-						rd_val = (rs1 < imm);  // haven't tested
+						rd_val = (rs1 < imm);
 				
 				end
 				
 				// SLTIU
 				else if(funct3 == 3'b011)
-					rd_val = (rs1 < imm);  // haven't tested 
+					rd_val = (rs1 < imm);
 					
 			end
 		
