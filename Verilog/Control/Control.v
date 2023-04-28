@@ -2,38 +2,23 @@ module Control(
 	input clk, rst,
 	input start,
 	output reg done
-	
-//	// displaying PC count
-//	output [6:0]PC_seg7,
-//
-//	// displaying rd name (display s10 as 10, display s11 as 11)
-//	output [6:0]rd_seg7_msb,
-//	output [6:0]rd_seg7_lsb,
-//
-//	// displaying rd val
-//	output [6:0]rd_val_seg7_neg,
-//	output [6:0]rd_val_seg7_hund,
-//	output [6:0]rd_val_seg7_ten,
-//	output [6:0]rd_val_seg7_one
 );
 
 //----------------------------------------------------------------------------
 // TO DO:
-// - Figure out how to display that the control works
-//		- Signal tap - recommended by Jamieson, need to use FPGA board
-//		- Testbench?
-//		- Seven seg. display?
 // - Test control with super simple tests listed below in inst. mem. section
 // - Create separate on chip memory for main memory (lw/sw)
 // - Implement LUI and maybe other one
+// - implement branches, jal, jalr
 // - Do tons more testing
 //----------------------------------------------------------------------------
 
 
 	reg [31:0]instruction;
-	reg [7:0]PC; // should it be 32 bits?
+	reg [7:0]PC; // 8 bits to match 8 bits of memory
+	reg [31:0]rd_val;
 
-	// instructions memory instantiation ----------------------------------------------------------------------------
+// instructions memory instantiation ----------------------------------------------------------------------------
 	
 	reg [7:0]inst_mem_address;
 	reg [31:0]inst_mem_input;
@@ -42,12 +27,7 @@ module Control(
 
 	instructions_mem inst_mem_instantiation(inst_mem_address, clk, inst_mem_input, 1'b0, inst_mem_output);
 	
-	// What's in it rn:
-	// addi t0, zero, 5 : 32'b(imm)000000000100 00000 000 00101 0010011 = 32'd4194963
-	// addi t1, zero, 5 : 32'b(imm)000000000011 00000 000 00110 0010011 = 32'd3146515
-	// add t2, t0, t1 : 32'b0000000 00110 00101 000 00111 0010011 = 32'd6456211
-	
-	// !!! main memory instantiation ----------------------------------------------------------------------------
+// main memory instantiation ---------------------------------------------------------------------------------------
 	
 	reg [7:0]main_mem_address;
 	reg [31:0]main_mem_input;
@@ -56,39 +36,19 @@ module Control(
 
 	main_mem main_mem_instantiation(main_mem_address, clk, main_mem_input, main_mem_wren, main_mem_output);
 	
-	// ALU instantiation ----------------------------------------------------------------------------
+// ALU instantiation --------------------------------------------------------------------------------------------------
 	
 	reg [4:0]rs1, rs2, rd;
 	reg [31:0]rs1_val, rs2_val;
-	wire [31:0]rd_val;
+	wire [31:0]ALU_rd_val;
 	reg [11:0]imm;
 	reg [6:0]funct7;
 	reg [2:0]funct3;
 	reg [6:0]opcode;
 	
-	/*
-		input [6:0]opcode,
-		input [6:0]funct7,
-		input [2:0]funct3,
-		input [11:0]imm,
-		
-		input [31:0]rs1_val,
-		input [31:0]rs2_val,
-		
-		output reg [31:0]rd_val
-	*/
+	ALU my_alu(opcode, funct7, funct3, imm, rs1_val, rs2_val, ALU_rd_val);
 	
-	ALU my_alu(opcode, funct7, funct3, imm, rs1_val, rs2_val, rd_val);
-	
-	// Seven segment instantiation ----------------------------------------------------------------------------
-
-	// Dr. Jamieson does NOT recommend doing this. He recommends using signal tap
-	
-//	reg [6:0]void;
-//	
-//	seven_seg_display disp_sev_seg(PC, rd, rd_val, PC_seg7, rd_seg7_msb, rd_seg7_lsb, rd_val_seg7_neg, rd_val_seg7_hund, rd_val_seg7_ten, rd_val_seg7_one, void);
-	
-	// Register instantiation ----------------------------------------------------------------------------
+// Register instantiation ---------------------------------------------------------------------------------------
 	
 	/*	+ x0 : zero the constant value 0
 		+ x1 : ra return address (caller saved)
@@ -207,26 +167,24 @@ module Control(
 		t5 = 5'd30,
 		t6 = 5'd31;
 	
-	// FSM stuff!! ----------------------------------------------------------------------------
+// FSM stuff!! ---------------------------------------------------------------------------------------
 	
 	reg [4:0]S;
 	reg [4:0]NS;
 	
 	parameter
 		INIT = 5'd0,
-		FETCH_1 = 5'd1,
-		FETCH_2 = 5'd8,
+		FETCH = 5'd1,
 		FETCH_DELAY = 5'd2,
 		DECODE_1 = 5'd3,
-		DECODE_2 = 5'd9,
-		DECODE_3 = 5'd10,
-		EXECUTE = 5'd4,
-		EXECUTE_DELAY = 5'd5,
-		WRITEBACK = 5'd6,
-		WRITEBACK_2 = 5'd11,
-		DONE = 5'd7,
+		DECODE_2 = 5'd4,
+		EXECUTE = 5'd5,
+		EXECUTE_DELAY = 5'd6,
+		WRITEBACK = 5'd7,
+		WRITEBACK_2 = 5'd8,
+		DONE = 5'd9,
 		ERROR = 5'hF;
-		// latest number used is 5'd11
+		// latest number used is 5'd9
 	
 	// Changing states
 	always @(posedge clk or negedge rst)
@@ -246,12 +204,11 @@ module Control(
 			INIT: 
 			begin
 				if (start == 1'b1)
-					NS = FETCH_1;
+					NS = FETCH;
 				else
 					NS = INIT;
 			end
-			FETCH_1: NS = FETCH_2;
-			FETCH_2: NS = FETCH_DELAY;
+			FETCH: NS = FETCH_DELAY;
 			FETCH_DELAY:
 			begin
 				if (instruction == 32'd0)
@@ -260,12 +217,11 @@ module Control(
 					NS = DECODE_1;
 			end
 			DECODE_1: NS = DECODE_2;
-			DECODE_2: NS = DECODE_3;
-			DECODE_3: NS = EXECUTE;
+			DECODE_2: NS = EXECUTE;
 			EXECUTE: NS = EXECUTE_DELAY;
 			EXECUTE_DELAY: NS = WRITEBACK;
 			WRITEBACK: NS = WRITEBACK_2;
-			WRITEBACK_2: NS = FETCH_1;
+			WRITEBACK_2: NS = FETCH;
 			DONE: NS = DONE;
 			default: NS = ERROR;
 		endcase
@@ -276,6 +232,7 @@ module Control(
 	begin
 		if (rst == 1'b0)
 		begin
+			// good to initiate things in rst bc you have total control
 			PC <= 32'd0;
 			instruction <= 32'd0;
 			
@@ -293,91 +250,79 @@ module Control(
 			done <= 1'b0;
 			
 			en_zero <= 1'b0;
-					en_ra <= 1'b0;
-					en_sp <= 1'b0;
-					en_gp <= 1'b0;
-					en_tp <= 1'b0;
-					en_t0 <= 1'b0;
-					en_t1 <= 1'b0;
-					en_t2 <= 1'b0;
-					en_s0 <= 1'b0;
-					en_s1 <= 1'b0;
-					en_a0 <= 1'b0;
-					en_a1 <= 1'b0;
-					en_a2 <= 1'b0;
-					en_a3 <= 1'b0;
-					en_a4 <= 1'b0;
-					en_a5 <= 1'b0;
-					en_a6 <= 1'b0;
-					en_a7 <= 1'b0;
-					en_s2 <= 1'b0;
-					en_s3 <= 1'b0;
-					en_s4 <= 1'b0;
-					en_s5 <= 1'b0;
-					en_s6 <= 1'b0;
-					en_s7 <= 1'b0;
-					en_s8 <= 1'b0;
-					en_s9 <= 1'b0;
-					en_s10 <= 1'b0;
-					en_s11 <= 1'b0;
-					en_t3 <= 1'b0;
-					en_t4 <= 1'b0;
-					en_t5 <= 1'b0;
-					en_t6 <= 1'b0;
-					
-					in_zero <= 1'b0;
-					in_ra <= 1'b0;
-					in_sp <= 1'b0;
-					in_gp <= 1'b0;
-					in_tp <= 1'b0;
-					in_t0 <= 1'b0;
-					in_t1 <= 1'b0;
-					in_t2 <= 1'b0;
-					in_s0 <= 1'b0;
-					in_s1 <= 1'b0;
-					in_a0 <= 1'b0;
-					in_a1 <= 1'b0;
-					in_a2 <= 1'b0;
-					in_a3 <= 1'b0;
-					in_a4 <= 1'b0;
-					in_a5 <= 1'b0;
-					in_a6 <= 1'b0;
-					in_a7 <= 1'b0;
-					in_s2 <= 1'b0;
-					in_s3 <= 1'b0;
-					in_s4 <= 1'b0;
-					in_s5 <= 1'b0;
-					in_s6 <= 1'b0;
-					in_s7 <= 1'b0;
-					in_s8 <= 1'b0;
-					in_s9 <= 1'b0;
-					in_s10 <= 1'b0;
-					in_s11 <= 1'b0;
-					in_t3 <= 1'b0;
-					in_t4 <= 1'b0;
-					in_t5 <= 1'b0;
-					in_t6 <= 1'b0;
+			en_ra <= 1'b0;
+			en_sp <= 1'b0;
+			en_gp <= 1'b0;
+			en_tp <= 1'b0;
+			en_t0 <= 1'b0;
+			en_t1 <= 1'b0;
+			en_t2 <= 1'b0;
+			en_s0 <= 1'b0;
+			en_s1 <= 1'b0;
+			en_a0 <= 1'b0;
+			en_a1 <= 1'b0;
+			en_a2 <= 1'b0;
+			en_a3 <= 1'b0;
+			en_a4 <= 1'b0;
+			en_a5 <= 1'b0;
+			en_a6 <= 1'b0;
+			en_a7 <= 1'b0;
+			en_s2 <= 1'b0;
+			en_s3 <= 1'b0;
+			en_s4 <= 1'b0;
+			en_s5 <= 1'b0;
+			en_s6 <= 1'b0;
+			en_s7 <= 1'b0;
+			en_s8 <= 1'b0;
+			en_s9 <= 1'b0;
+			en_s10 <= 1'b0;
+			en_s11 <= 1'b0;
+			en_t3 <= 1'b0;
+			en_t4 <= 1'b0;
+			en_t5 <= 1'b0;
+			en_t6 <= 1'b0;
+			
+			in_zero <= 1'b0;
+			in_ra <= 1'b0;
+			in_sp <= 1'b0;
+			in_gp <= 1'b0;
+			in_tp <= 1'b0;
+			in_t0 <= 1'b0;
+			in_t1 <= 1'b0;
+			in_t2 <= 1'b0;
+			in_s0 <= 1'b0;
+			in_s1 <= 1'b0;
+			in_a0 <= 1'b0;
+			in_a1 <= 1'b0;
+			in_a2 <= 1'b0;
+			in_a3 <= 1'b0;
+			in_a4 <= 1'b0;
+			in_a5 <= 1'b0;
+			in_a6 <= 1'b0;
+			in_a7 <= 1'b0;
+			in_s2 <= 1'b0;
+			in_s3 <= 1'b0;
+			in_s4 <= 1'b0;
+			in_s5 <= 1'b0;
+			in_s6 <= 1'b0;
+			in_s7 <= 1'b0;
+			in_s8 <= 1'b0;
+			in_s9 <= 1'b0;
+			in_s10 <= 1'b0;
+			in_s11 <= 1'b0;
+			in_t3 <= 1'b0;
+			in_t4 <= 1'b0;
+			in_t5 <= 1'b0;
+			in_t6 <= 1'b0;
 		end
 		else
 		begin
 			case(S)
-				INIT:
+				FETCH:
 				begin
-					
-				end
-				
-				FETCH_1:
-				begin
+					// getting instruction from inst_mem using PC
 					inst_mem_address <= PC;
-				end
-				
-				FETCH_2:
-				begin
 					instruction <= inst_mem_output;
-				end
-				
-				FETCH_DELAY:
-				begin
 				end
 				
 				DECODE_1:
@@ -436,15 +381,58 @@ module Control(
 						imm <= instruction[31:12];
 					end
 					
-				//-----------------------------------------------------------------------------
-				// Branches:
-				//
-				// 31         25 24     20 19     15 14  12 11      7 6            0
-				// +------------+---------+---------+------+---------+-------------+
-				// | imm        | rs2     | rs1     | 000  | imm     | 1100011     |
-				// +------------+---------+---------+------+---------+-------------+
-				//
-				//-----------------------------------------------------------------------------
+					//-----------------------------------------------------------------------------
+					//
+					// 31         25 24     20 19     15 14  12 11      7 6            0
+					// +------------+---------+---------+------+---------+-------------+
+					// | imm        | rs2     | rs1     | 000  | imm     | 1100011     |
+					// +------------+---------+---------+------+---------+-------------+
+					//
+					//-----------------------------------------------------------------------------
+					
+					// Branches
+					else if (instruction[6:0] == 7'b1100011)
+					begin
+						imm <= {instruction[31:25], instruction[11:7]};  // idk if this is right but i'm going with it
+						rs2 <= instruction[24:20];
+						rs1 <= instruction[19:15];
+						rd <= 5'd0;  // i prob don't need this but just in case
+						funct3 <= instruction[14:12];
+					end
+					
+					//-----------------------------------------------------------------------------
+					//
+					// 31                                    12 11      7 6            0
+					// +---------------------------------------+---------+-------------+
+					// | imm                                   | rd      | 1101111     |
+					// +---------------------------------------+---------+-------------+
+					//
+					//-----------------------------------------------------------------------------
+					
+					// JAL
+					else if (instruction[6:0] == 7'b1101111)
+					begin
+						imm <= instruction[31:12];
+					end
+					
+					//-----------------------------------------------------------------------------
+					//
+					// 31                   20 19     15 14  12 11      7 6            0
+					// +----------------------+---------+------+---------+-------------+
+					// |imm                   | rs1     | 000  | rd      | 1100111     |
+					// +----------------------+---------+------+---------+-------------+
+					//
+					//-----------------------------------------------------------------------------
+					
+					
+					//JALR
+					else if (instruction[6:0] == 7'b1100111)
+					begin
+						imm <= instruction[31:20];
+						rs1 <= instruction[19:15];
+						funct3 <= instruction[14:12];
+
+					end
 				
 				end
 				
@@ -459,10 +447,54 @@ module Control(
 							imm <= instruction[24:20];
 						end
 					end
+					
+					// branches
+					else if (instruction[6:0] == 7'b1100011)
+					begin
+						// BEQ
+						if (funct3 == 3'b000)
+							PC <= (rs1_val == rs2_val)? PC + imm : PC + 1;
+						
+						// BNE
+						if (funct3 == 3'b001)
+							PC <= (rs1_val != rs2_val)? PC + imm : PC + 1;
+						
+						// BLT - SIGNED
+						if (funct3 == 3'b100)
+							//PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
+						
+						// BGE - SIGNED
+						if (funct3 == 3'b101)
+							//PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
+						
+						// BLTU - UNSIGNED
+						if (funct3 == 3'b110)
+							PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
+						
+						// BGEU - UNSIGNED
+						if (funct3 == 3'b111)
+							PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
+					end
+					
+					// JAL
+					else if (instruction[6:0] == 7'b1101111)
+					begin
+						rd_val <= PC + 1;
+						PC <= PC + imm;
+					end
+					
+					// JALR
+					else if (instruction[6:0] == 7'b1100111)
+					begin
+						rd_val <= PC + 1;
+						PC <= (rs1_val + imm) & 32'hfffffffe;
+					end
 				end
 				
-				DECODE_3:
+				EXECUTE:
 				begin
+				// do ALU stuff or memory stuff (lw/sw)
+				
 					// put values in rs1_val, rs2_val
 					case(rs1)
 						zero: rs1_val <= result_zero;
@@ -539,11 +571,9 @@ module Control(
 						begin
 						end
 					endcase
-				end
-				
-				EXECUTE:
-				begin	
-					// do ALU stuff or memory stuff
+					
+					// putting ALU rd_val result in rd_val
+					rd_val <= ALU_rd_val;
 					
 				end
 				
@@ -757,11 +787,13 @@ module Control(
 					en_t5 <= 1'b0;
 					en_t6 <= 1'b0;
 					
+					// update PC
 					PC <= PC + 8'd1;
 				end
 				
 				DONE:
 				begin
+					// end program woo
 					done <= 1'b1;
 				end
 				
