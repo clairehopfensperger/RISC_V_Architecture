@@ -56,6 +56,6 @@ module tb_control;
 	
 	// this makes the simulation go for 1000 steps
 	initial
-		#1000 $stop;
+		#10000 $stop;
 
 endmodule
