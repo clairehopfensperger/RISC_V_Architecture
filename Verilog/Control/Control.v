@@ -90,7 +90,7 @@ module Control(
 		in_t3, in_t4, in_t5, in_t6;
 	
 	// en
-	reg [31:0]en_zero, en_ra, en_sp, en_gp, en_tp, en_t0, en_t1, en_t2, en_s0, en_s1, en_a0, en_a1, en_a2, 
+	reg en_zero, en_ra, en_sp, en_gp, en_tp, en_t0, en_t1, en_t2, en_s0, en_s1, en_a0, en_a1, en_a2, 
 		en_a3, en_a4, en_a5, en_a6, en_a7, en_s2, en_s3, en_s4, en_s5, en_s6, en_s7, en_s8, en_s9, en_s10, en_s11, 
 		en_t3, en_t4, en_t5, en_t6;
 	
@@ -175,16 +175,21 @@ module Control(
 	parameter
 		INIT = 5'd0,
 		FETCH = 5'd1,
+		FETCH_2 = 5'd13,
 		FETCH_DELAY = 5'd2,
+		FETCH_DELAY_2 = 5'd14,
+		DECODE_0 = 5'd10,
 		DECODE_1 = 5'd3,
 		DECODE_2 = 5'd4,
 		EXECUTE = 5'd5,
+		EXECUTE_2 = 5'd12,
 		EXECUTE_DELAY = 5'd6,
 		WRITEBACK = 5'd7,
 		WRITEBACK_2 = 5'd8,
+		UPDATE_PC = 5'd11,
 		DONE = 5'd9,
 		ERROR = 5'hF;
-		// latest number used is 5'd9
+		// latest number used is 5'd14
 	
 	// Changing states
 	always @(posedge clk or negedge rst)
@@ -209,19 +214,32 @@ module Control(
 					NS = INIT;
 			end
 			FETCH: NS = FETCH_DELAY;
-			FETCH_DELAY:
+			FETCH_DELAY: NS = FETCH_2;
+			FETCH_2: NS = FETCH_DELAY_2;
+			FETCH_DELAY_2:
 			begin
 				if (instruction == 32'd0)
 					NS = DONE;
 				else 
-					NS = DECODE_1;
+					NS = DECODE_0;
 			end
+			
+			DECODE_0: NS = DECODE_1;
 			DECODE_1: NS = DECODE_2;
 			DECODE_2: NS = EXECUTE;
-			EXECUTE: NS = EXECUTE_DELAY;
+			EXECUTE: NS = EXECUTE_2;
+			EXECUTE_2: NS = EXECUTE_DELAY;
 			EXECUTE_DELAY: NS = WRITEBACK;
 			WRITEBACK: NS = WRITEBACK_2;
-			WRITEBACK_2: NS = FETCH;
+			WRITEBACK_2:
+			begin
+				// jal, jalr, and branches don't go to UPDATE_PC bc they already update the PC
+				if (opcode == 7'b1101111 || opcode == 7'b1100111 || opcode == 7'b1100011)
+					NS = FETCH;
+				else
+					NS = UPDATE_PC;
+			end
+			UPDATE_PC: NS = FETCH;
 			DONE: NS = DONE;
 			default: NS = ERROR;
 		endcase
@@ -240,12 +258,22 @@ module Control(
 			inst_mem_input <= 32'd0;
 			inst_mem_wren <= 1'b0;
 			
+			main_mem_address <= 32'd0;
+			main_mem_input <= 32'd0;
+			main_mem_wren <= 1'b0;
+
+			
+			rs1_val <= 32'd0;
+			rs2_val <= 32'd0;
+			rd_val <= 32'd0;
+			
 			rs1 <= 5'd0;
 			rs2 <= 5'd0;
 			rd <= 5'd0;
 			imm <= 12'd0;
 			funct7 <= 7'd0;
 			funct3 <= 3'd0;
+			opcode <= 7'd0;
 			
 			done <= 1'b0;
 			
@@ -320,17 +348,23 @@ module Control(
 			case(S)
 				FETCH:
 				begin
-					// getting instruction from inst_mem using PC
 					inst_mem_address <= PC;
+				end
+				
+				FETCH_2:
+				begin
 					instruction <= inst_mem_output;
+				end
+				
+				DECODE_0:
+				begin
+					// same for all
+					opcode <= instruction[6:0];
+					rd <= instruction[11:7];
 				end
 				
 				DECODE_1:
 				begin
-					
-					// same for all
-					opcode <= instruction[6:0];
-					rd <= instruction[11:7];
 					
 					//----------------------------------------------------------------------------	
 					//
@@ -342,7 +376,7 @@ module Control(
 					//	+------------+---------+---------+------+---------+-------------+
 					//
 					//----------------------------------------------------------------------------
-					if (instruction[6:0] == 7'b0110011)
+					if (opcode == 7'b0110011)
 					begin
 						rs1 <= instruction[19:15];
 						rs2 <= instruction[24:20];
@@ -359,7 +393,7 @@ module Control(
 					// +----------------------+---------+------+---------+-------------+
 					//	
 					//-----------------------------------------------------------------------------	
-					else if (instruction[6:0] == 7'b0010011)
+					else if (opcode == 7'b0010011)
 					begin					
 						rs1 <= instruction[19:15];
 						imm <= instruction[31:20];
@@ -367,31 +401,29 @@ module Control(
 					end
 					
 					//-----------------------------------------------------------------------------
-					// 
+					// LUI || AUIPC
+					//
 					// 31                                    12 11      7 6            0
 					// +---------------------------------------+---------+-------------+
 					// | imm                                   | rd      | 0110111     |
 					// +---------------------------------------+---------+-------------+
 					// 
 					//-----------------------------------------------------------------------------
-					
-					// LUI || AUIPC
-					else if (instruction[6:0] == 7'b0110111 || instruction[6:0] == 7'b0010111)
+					else if (opcode == 7'b0110111 || opcode == 7'b0010111)
 					begin
 						imm <= instruction[31:12];
 					end
 					
 					//-----------------------------------------------------------------------------
-					//
+					// Branches
+					// 
 					// 31         25 24     20 19     15 14  12 11      7 6            0
 					// +------------+---------+---------+------+---------+-------------+
 					// | imm        | rs2     | rs1     | 000  | imm     | 1100011     |
 					// +------------+---------+---------+------+---------+-------------+
 					//
 					//-----------------------------------------------------------------------------
-					
-					// Branches
-					else if (instruction[6:0] == 7'b1100011)
+					else if (opcode == 7'b1100011)
 					begin
 						imm <= {instruction[31:25], instruction[11:7]};  // idk if this is right but i'm going with it
 						rs2 <= instruction[24:20];
@@ -401,37 +433,66 @@ module Control(
 					end
 					
 					//-----------------------------------------------------------------------------
-					//
+					// JAL
+					// 
 					// 31                                    12 11      7 6            0
 					// +---------------------------------------+---------+-------------+
 					// | imm                                   | rd      | 1101111     |
 					// +---------------------------------------+---------+-------------+
 					//
 					//-----------------------------------------------------------------------------
-					
-					// JAL
-					else if (instruction[6:0] == 7'b1101111)
+					else if (opcode == 7'b1101111)
 					begin
 						imm <= instruction[31:12];
 					end
 					
 					//-----------------------------------------------------------------------------
-					//
+					// JALR
+					// 
 					// 31                   20 19     15 14  12 11      7 6            0
 					// +----------------------+---------+------+---------+-------------+
 					// |imm                   | rs1     | 000  | rd      | 1100111     |
 					// +----------------------+---------+------+---------+-------------+
 					//
 					//-----------------------------------------------------------------------------
-					
-					
-					//JALR
-					else if (instruction[6:0] == 7'b1100111)
+					else if (opcode == 7'b1100111)
 					begin
 						imm <= instruction[31:20];
 						rs1 <= instruction[19:15];
 						funct3 <= instruction[14:12];
-
+					end
+					
+					//-----------------------------------------------------------------------------
+					// Lw
+					// 
+					// 31                   20 19     15 14  12 11      7 6            0
+					// +----------------------+---------+------+---------+-------------+
+					// |imm                   | rs1     | 010  | rd      | 0000011     |
+					// +----------------------+---------+------+---------+-------------+
+					//
+					//-----------------------------------------------------------------------------
+					else if (opcode == 7'b0000011)
+					begin
+						imm <= instruction[31:20];
+						rs1 <= instruction[19:15];
+						funct3 <= instruction[14:12];
+					end
+					
+					//-----------------------------------------------------------------------------
+					// Sw
+					// 
+					// 31         25 24     20 19     15 14  12 11      7 6            0
+					// +------------+---------+---------+------+---------+-------------+
+					// |imm         | rs2     | rs1     | 010  | imm     | 0100011     |
+					// +------------+---------+---------+------+---------+-------------+
+					//
+					//-----------------------------------------------------------------------------
+					else if (opcode == 7'b0100011)
+					begin
+						imm <= instruction[31:25];
+						rs2 <= instruction[24:20];
+						rs1 <= instruction[19:15];
+						funct3 <= instruction[14:12];
 					end
 				
 				end
@@ -439,7 +500,7 @@ module Control(
 				DECODE_2:
 				begin
 					// more I-type specifications
-					if (instruction[6:0] == 7'b0010011)
+					if (opcode == 7'b0010011)
 					begin						
 						if (funct3 == 3'b101 || funct3 == 3'b001)
 						begin
@@ -448,43 +509,15 @@ module Control(
 						end
 					end
 					
-					// branches
-					else if (instruction[6:0] == 7'b1100011)
-					begin
-						// BEQ
-						if (funct3 == 3'b000)
-							PC <= (rs1_val == rs2_val)? PC + imm : PC + 1;
-						
-						// BNE
-						if (funct3 == 3'b001)
-							PC <= (rs1_val != rs2_val)? PC + imm : PC + 1;
-						
-						// BLT - SIGNED
-						if (funct3 == 3'b100)
-							//PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
-						
-						// BGE - SIGNED
-						if (funct3 == 3'b101)
-							//PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
-						
-						// BLTU - UNSIGNED
-						if (funct3 == 3'b110)
-							PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
-						
-						// BGEU - UNSIGNED
-						if (funct3 == 3'b111)
-							PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
-					end
-					
 					// JAL
-					else if (instruction[6:0] == 7'b1101111)
+					else if (opcode == 7'b1101111)
 					begin
 						rd_val <= PC + 1;
 						PC <= PC + imm;
 					end
 					
 					// JALR
-					else if (instruction[6:0] == 7'b1100111)
+					else if (opcode == 7'b1100111)
 					begin
 						rd_val <= PC + 1;
 						PC <= (rs1_val + imm) & 32'hfffffffe;
@@ -493,8 +526,6 @@ module Control(
 				
 				EXECUTE:
 				begin
-				// do ALU stuff or memory stuff (lw/sw)
-				
 					// put values in rs1_val, rs2_val
 					case(rs1)
 						zero: rs1_val <= result_zero;
@@ -572,8 +603,57 @@ module Control(
 						end
 					endcase
 					
-					// putting ALU rd_val result in rd_val
-					rd_val <= ALU_rd_val;
+					//memory stuff
+					// lw/sw
+//					reg [7:0]main_mem_address;
+//					reg [31:0]main_mem_input;
+//					wire [31:0]main_mem_output;
+//					reg main_mem_wren;
+					
+				end
+				
+				EXECUTE_2:
+				begin
+					
+					// if using ALU,  putting ALU rd_val result in rd_val
+					if (opcode == 7'b0110011 || opcode == 7'b0010011 || opcode == 7'b0110111 || opcode == 7'b0010111)
+						rd_val <= ALU_rd_val;
+					
+					// branches
+					if (opcode == 7'b1100011)
+					begin
+						// BEQ
+						if (funct3 == 3'b000)
+						begin
+							//PC <= (rs1_val == rs2_val)? PC + imm : PC + 1;
+							if (rs1_val == rs2_val)
+								PC <= PC + imm;
+							else
+								PC <= PC + 1;
+						end 
+						
+						// BNE
+						if (funct3 == 3'b001)
+							PC <= (rs1_val != rs2_val)? PC + imm : PC + 1;
+						
+						// BLT - SIGNED
+						if (funct3 == 3'b100)
+							//PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
+						
+						// BGE - SIGNED
+						if (funct3 == 3'b101)
+							//PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
+						
+						// BLTU - UNSIGNED
+						if (funct3 == 3'b110)
+							PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
+						
+						// BGEU - UNSIGNED
+						if (funct3 == 3'b111)
+							PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
+					end
+					
+					//lw/sw
 					
 				end
 				
@@ -786,7 +866,10 @@ module Control(
 					en_t4 <= 1'b0;
 					en_t5 <= 1'b0;
 					en_t6 <= 1'b0;
-					
+				end
+				
+				UPDATE_PC:
+				begin
 					// update PC
 					PC <= PC + 8'd1;
 				end
