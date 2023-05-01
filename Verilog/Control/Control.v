@@ -6,13 +6,10 @@ module Control(
 
 //----------------------------------------------------------------------------
 // TO DO:
-// - Test control with super simple tests listed below in inst. mem. section
-// - Create separate on chip memory for main memory (lw/sw)
-// - Implement LUI and maybe other one
-// - implement branches, jal, jalr
+// - Implement LUI and maybe AUIPC
+// - implement jalr
 // - Do tons more testing
 //----------------------------------------------------------------------------
-
 
 	reg [31:0]instruction;
 	reg [7:0]PC; // 8 bits to match 8 bits of memory
@@ -25,7 +22,7 @@ module Control(
 	wire [31:0]inst_mem_output;
 	reg inst_mem_wren;  // never writing to memory, always set to 1'b0
 
-	instructions_mem inst_mem_instantiation(inst_mem_address, clk, inst_mem_input, 1'b0, inst_mem_output);
+	instructions_mem inst_mem_instantiation(inst_mem_address, clk, inst_mem_input, inst_mem_wren, inst_mem_output);
 	
 // main memory instantiation ---------------------------------------------------------------------------------------
 	
@@ -41,12 +38,12 @@ module Control(
 	reg [4:0]rs1, rs2, rd;
 	reg [31:0]rs1_val, rs2_val;
 	wire [31:0]ALU_rd_val;
-	reg [11:0]imm;
+	reg [32:0]imm;
 	reg [6:0]funct7;
 	reg [2:0]funct3;
 	reg [6:0]opcode;
 	
-	ALU my_alu(opcode, funct7, funct3, imm, rs1_val, rs2_val, ALU_rd_val);
+	ALU my_alu(opcode, funct7, funct3, imm, PC, rs1_val, rs2_val, ALU_rd_val);
 	
 // Register instantiation ---------------------------------------------------------------------------------------
 	
@@ -100,7 +97,7 @@ module Control(
 		result_s3, result_s4, result_s5, result_s6, result_s7, result_s8, result_s9, result_s10, result_s11, result_t3, 
 		result_t4, result_t5, result_t6;
 	
-	Register reg_zero(clk, rst, 32'd0, 1'b1, result_zero);
+	Register reg_zero(clk, rst, 32'd0, en_zero, result_zero);  // reg zero always only holds 0
 	Register reg_ra(clk, rst, in_ra, en_ra, result_ra);
 	Register reg_sp(clk, rst, in_sp, en_sp, result_sp);
 	Register reg_gp(clk, rst, in_gp, en_gp, result_gp);
@@ -174,22 +171,29 @@ module Control(
 	
 	parameter
 		INIT = 5'd0,
+		
 		FETCH = 5'd1,
-		FETCH_2 = 5'd13,
 		FETCH_DELAY = 5'd2,
-		FETCH_DELAY_2 = 5'd14,
-		DECODE_0 = 5'd10,
-		DECODE_1 = 5'd3,
-		DECODE_2 = 5'd4,
-		EXECUTE = 5'd5,
-		EXECUTE_2 = 5'd12,
-		EXECUTE_DELAY = 5'd6,
-		WRITEBACK = 5'd7,
-		WRITEBACK_2 = 5'd8,
-		UPDATE_PC = 5'd11,
-		DONE = 5'd9,
+		FETCH_2 = 5'd3,
+		FETCH_DELAY_2 = 5'd4,
+		
+		DECODE_0 = 5'd5,
+		DECODE_1 = 5'd6,
+		DECODE_2 = 5'd7,
+		
+		EXECUTE = 5'd8,
+		EXECUTE_1 = 5'd9,
+		EXECUTE_DELAY = 5'd10,
+		EXECUTE_2 = 5'd11,
+		EXECUTE_DELAY_2 = 5'd12,
+		
+		WRITEBACK = 5'd13,
+		WRITEBACK_2 = 5'd14,
+		UPDATE_PC = 5'd15,
+		
+		DONE = 5'd16,
 		ERROR = 5'hF;
-		// latest number used is 5'd14
+		// latest number used is 5'd16
 	
 	// Changing states
 	always @(posedge clk or negedge rst)
@@ -213,6 +217,8 @@ module Control(
 				else
 					NS = INIT;
 			end
+			
+			// FETCH - needs delays for getting instructions from instruction memory
 			FETCH: NS = FETCH_DELAY;
 			FETCH_DELAY: NS = FETCH_2;
 			FETCH_2: NS = FETCH_DELAY_2;
@@ -224,12 +230,19 @@ module Control(
 					NS = DECODE_0;
 			end
 			
+			// DECODE
 			DECODE_0: NS = DECODE_1;
 			DECODE_1: NS = DECODE_2;
 			DECODE_2: NS = EXECUTE;
-			EXECUTE: NS = EXECUTE_2;
-			EXECUTE_2: NS = EXECUTE_DELAY;
-			EXECUTE_DELAY: NS = WRITEBACK;
+			
+			// EXECUTE - needs delays for writing to and reading from main memory
+			EXECUTE: NS = EXECUTE_1;
+			EXECUTE_1: NS = EXECUTE_DELAY;
+			EXECUTE_DELAY: NS = EXECUTE_2;
+			EXECUTE_2: NS = EXECUTE_DELAY_2;
+			EXECUTE_DELAY_2: NS = WRITEBACK;
+			
+			// WRITEBACK
 			WRITEBACK: NS = WRITEBACK_2;
 			WRITEBACK_2:
 			begin
@@ -240,6 +253,7 @@ module Control(
 					NS = UPDATE_PC;
 			end
 			UPDATE_PC: NS = FETCH;
+		
 			DONE: NS = DONE;
 			default: NS = ERROR;
 		endcase
@@ -251,14 +265,14 @@ module Control(
 		if (rst == 1'b0)
 		begin
 			// good to initiate things in rst bc you have total control
-			PC <= 32'd0;
+			PC <= 8'd0;
 			instruction <= 32'd0;
 			
-			inst_mem_address <= 32'd0;
+			inst_mem_address <= 8'd0;
 			inst_mem_input <= 32'd0;
 			inst_mem_wren <= 1'b0;
 			
-			main_mem_address <= 32'd0;
+			main_mem_address <= 8'd0;
 			main_mem_input <= 32'd0;
 			main_mem_wren <= 1'b0;
 
@@ -358,16 +372,17 @@ module Control(
 				
 				DECODE_0:
 				begin
-					// same for all
-					opcode <= instruction[6:0];
-					rd <= instruction[11:7];
+					// initializing different parts of code that's the same for all (most)
+					
+					opcode <= instruction[6:0];  // same for all
+					rd <= instruction[11:7];  // some instructions don't use rd so it's overwritten in those cases
 				end
 				
 				DECODE_1:
 				begin
+					// initializing different parts of code based on opcode
 					
-					//----------------------------------------------------------------------------	
-					//
+					//----------------------------------------------------------------------------
 					// R-Type:
 					// 
 					// 31         25 24     20 19     15 14  12 11      7 6            0
@@ -405,7 +420,7 @@ module Control(
 					//
 					// 31                                    12 11      7 6            0
 					// +---------------------------------------+---------+-------------+
-					// | imm                                   | rd      | 0110111     |
+					// | imm                                   | rd      | opcode      |
 					// +---------------------------------------+---------+-------------+
 					// 
 					//-----------------------------------------------------------------------------
@@ -419,16 +434,16 @@ module Control(
 					// 
 					// 31         25 24     20 19     15 14  12 11      7 6            0
 					// +------------+---------+---------+------+---------+-------------+
-					// | imm        | rs2     | rs1     | 000  | imm     | 1100011     |
+					// | imm        | rs2     | rs1     |funct3| imm     | 1100011     |
 					// +------------+---------+---------+------+---------+-------------+
 					//
 					//-----------------------------------------------------------------------------
 					else if (opcode == 7'b1100011)
 					begin
-						imm <= {instruction[31:25], instruction[11:7]};  // idk if this is right but i'm going with it
+						imm <= {instruction[31:25], instruction[11:7]};
 						rs2 <= instruction[24:20];
 						rs1 <= instruction[19:15];
-						rd <= 5'd0;  // i prob don't need this but just in case
+						rd <= 5'd0;  // overwritting for safety :)
 						funct3 <= instruction[14:12];
 					end
 					
@@ -489,9 +504,10 @@ module Control(
 					//-----------------------------------------------------------------------------
 					else if (opcode == 7'b0100011)
 					begin
-						imm <= instruction[31:25];
+						imm <= {instruction[31:25], instruction[11:7]};
 						rs2 <= instruction[24:20];
 						rs1 <= instruction[19:15];
+						rd <= 5'd0;  // overwritting for safety :)
 						funct3 <= instruction[14:12];
 					end
 				
@@ -499,6 +515,8 @@ module Control(
 				
 				DECODE_2:
 				begin
+					// more initializing based on opcode and funct3
+				
 					// more I-type specifications
 					if (opcode == 7'b0010011)
 					begin						
@@ -509,24 +527,13 @@ module Control(
 						end
 					end
 					
-					// JAL
-					else if (opcode == 7'b1101111)
-					begin
-						rd_val <= PC + 1;
-						PC <= PC + imm;
-					end
-					
-					// JALR
-					else if (opcode == 7'b1100111)
-					begin
-						rd_val <= PC + 1;
-						PC <= (rs1_val + imm) & 32'hfffffffe;
-					end
+					// jal and jalr were here but i'm putting them in EXECUTE_1
 				end
 				
 				EXECUTE:
 				begin
 					// put values in rs1_val, rs2_val
+					
 					case(rs1)
 						zero: rs1_val <= result_zero;
 						ra: rs1_val <= result_ra;
@@ -603,62 +610,103 @@ module Control(
 						end
 					endcase
 					
-					//memory stuff
-					// lw/sw
-//					reg [7:0]main_mem_address;
-//					reg [31:0]main_mem_input;
-//					wire [31:0]main_mem_output;
-//					reg main_mem_wren;
-					
 				end
 				
-				EXECUTE_2:
+				EXECUTE_1:
 				begin
+					// executing stuff that requires rs1_val/rs2_val from EXECUTE
 					
 					// if using ALU,  putting ALU rd_val result in rd_val
 					if (opcode == 7'b0110011 || opcode == 7'b0010011 || opcode == 7'b0110111 || opcode == 7'b0010111)
 						rd_val <= ALU_rd_val;
 					
+					// JAL
+					else if (opcode == 7'b1101111)
+					begin
+						rd_val <= PC + 8'd1;
+						PC <= PC + imm[7:0];
+					end
+					
+					// JALR
+					else if (opcode == 7'b1100111)
+					begin
+						rd_val <= PC + 8'd1;
+						PC <= (rs1_val + imm) & 32'hfffffffe;
+					end
+					
+					// SW
+					if (opcode == 7'b0100011)
+					begin
+						main_mem_wren <= 1'b1;  // test if adding line to LW
+						main_mem_address <= rs1 + imm;
+						main_mem_input <= rs2_val;
+					end
+					
+					// LW
+					if (opcode == 7'b0000011)
+					begin
+						main_mem_wren <= 1'b0;  // test if removing this line in writeback
+						main_mem_address <= rs1 + imm;
+					end
+					
 					// branches
 					if (opcode == 7'b1100011)
 					begin
+						
 						// BEQ
 						if (funct3 == 3'b000)
-						begin
-							//PC <= (rs1_val == rs2_val)? PC + imm : PC + 1;
-							if (rs1_val == rs2_val)
-								PC <= PC + imm;
-							else
-								PC <= PC + 1;
-						end 
+							PC <= (rs1_val == rs2_val)? PC + imm : PC + 8'd1;
 						
 						// BNE
 						if (funct3 == 3'b001)
-							PC <= (rs1_val != rs2_val)? PC + imm : PC + 1;
+							PC <= (rs1_val != rs2_val)? PC + imm : PC + 8'd1;
 						
 						// BLT - SIGNED
 						if (funct3 == 3'b100)
-							//PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
+						begin
+							//PC <= (rs1_val < rs2_val)? PC + imm : PC + 8'd1;
+							
+							if (rs1_val[31] == 1'b1 && rs2_val[31] == 1'b0)
+								PC <= PC + imm;
+							else if (rs1_val[31] == 1'b0 && rs1_val[31] == 1'b1)
+								PC <= PC + 8'd1;
+							else if (rs1 < rs2)
+								PC <= PC + imm;
+						end
 						
 						// BGE - SIGNED
 						if (funct3 == 3'b101)
-							//PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
+						begin
+							//PC <= (rs1_val >= rs2_val)? PC + imm : PC + 8'd1;
+							
+							if (rs1_val[31] == 1'b1 && rs2_val[31] == 1'b0)
+								PC <= PC + 8'd1;
+							else if (rs1_val[31] == 1'b0 && rs1_val[31] == 1'b1)
+								PC <= PC + imm;
+							else if (rs1 >= rs2)
+								PC <= PC + imm;
+						end	
 						
 						// BLTU - UNSIGNED
 						if (funct3 == 3'b110)
-							PC <= (rs1_val < rs2_val)? PC + imm : PC + 1;
+							PC <= (rs1_val < rs2_val)? PC + imm : PC + 8'd1;
 						
 						// BGEU - UNSIGNED
 						if (funct3 == 3'b111)
-							PC <= (rs1_val >= rs2_val)? PC + imm : PC + 1;
+							PC <= (rs1_val >= rs2_val)? PC + imm : PC + 8'd1;
+							
 					end
-					
-					//lw/sw
 					
 				end
 				
-				EXECUTE_DELAY:
+				EXECUTE_2:
 				begin
+					// LW memory stuff, needed delay before it
+					
+					// LW
+					if (opcode == 7'b0000011)
+						rd_val <= main_mem_output;
+					
 				end
 				
 				WRITEBACK:
