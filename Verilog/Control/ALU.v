@@ -4,6 +4,8 @@ module ALU (
 	input [2:0]funct3,
 	input [11:0]imm,
 	
+	input [7:0]PC,
+	
 	input [31:0]rs1_val,
 	input [31:0]rs2_val,
 	
@@ -228,13 +230,13 @@ module ALU (
 		// LUI
 		else if (opcode == 7'b0110111)
 		begin
-			rd_val = (imm << 12) & rd_val;		
+			rd_val = imm << 12;  	
 		end
 		
 		// AUIPC
 		else if (opcode == 7'b0010111)
 		begin
-			
+			rd_val = PC + (imm << 12);
 			
 		
 		end
