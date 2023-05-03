@@ -670,8 +670,10 @@ module Control(
 								PC <= PC + {{20{imm[11]}}, imm};
 							else if (rs1_val[31] == 1'b0 && rs1_val[31] == 1'b1)
 								PC <= PC + 8'd1;
-							else if (rs1 < rs2)
+							else if (rs1_val < rs2_val)
 								PC <= PC + {{20{imm[11]}}, imm};
+							else  // greater than or equal to with same msb
+								PC <= PC + 8'd1;
 						end
 						
 						// BGE - SIGNED
@@ -683,8 +685,10 @@ module Control(
 								PC <= PC + 8'd1;
 							else if (rs1_val[31] == 1'b0 && rs1_val[31] == 1'b1)
 								PC <= PC + {{20{imm[11]}}, imm};
-							else if (rs1 >= rs2)
+							else if (rs1_val >= rs2_val)
 								PC <= PC + {{20{imm[11]}}, imm};
+							else   // less than with same msb
+								PC <= PC + 8'd1;
 						end	
 						
 						// BLTU - UNSIGNED
