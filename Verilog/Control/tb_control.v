@@ -30,7 +30,7 @@ module tb_control;
 		#(simdelay) rst = 1'b1; 
 		#(simdelay) start = 1'b1;
 		
-		#1000; // let simulation finish
+		#10000; // let simulation finish
 	
 	end
 
