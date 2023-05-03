@@ -143,7 +143,7 @@ module ALU (
 		
 			// ADDI
 			if (funct3 == 3'b000)
-				rd_val = rs1 + imm;
+				rd_val = rs1 + {{20{imm[11]}}, imm};  // sign extended hopefully
 				
 			// SRAI/SRLI/SLLI shift ops
 			else if (funct3 == 3'b101 || funct3 == 3'b001)
@@ -185,15 +185,15 @@ module ALU (
 			
 				// ANDI
 				if (funct3 == 3'b111)
-					rd_val = rs1 & imm;
+					rd_val = rs1 & {{20{imm[11]}}, imm};
 				
 				// ORI
 				else if (funct3 == 3'b110)
-					rd_val = rs1 | imm;
+					rd_val = rs1 | {{20{imm[11]}}, imm};
 					
 				// XORI
 				else if (funct3 == 3'b100)
-					rd_val = rs1 ^ imm;
+					rd_val = rs1 ^ {{20{imm[11]}}, imm};
 					
 				// SLTI
 				else if(funct3 == 3'b010)
@@ -206,13 +206,13 @@ module ALU (
 						rd_val = 32'd0;
 						
 					else 
-						rd_val = (rs1 < imm);  // haven't tested
+						rd_val = (rs1 < {{20{imm[11]}}, imm});  // haven't tested
 				
 				end
 				
 				// SLTIU
 				else if(funct3 == 3'b011)
-					rd_val = (rs1 < imm);  // haven't tested 
+					rd_val = (rs1 < {{20{imm[11]}}, imm});  // haven't tested 
 					
 			end
 		
