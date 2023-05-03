@@ -206,13 +206,13 @@ module ALU (
 						rd_val = 32'd0;
 						
 					else 
-						rd_val = (rs1 < {{20{imm[11]}}, imm});  // haven't tested
+						rd_val = (rs1 < {{20{imm[11]}}, imm});
 				
 				end
 				
 				// SLTIU
 				else if(funct3 == 3'b011)
-					rd_val = (rs1 < {{20{imm[11]}}, imm});  // haven't tested 
+					rd_val = (rs1 < {{20{imm[11]}}, imm});
 					
 			end
 		
@@ -236,7 +236,7 @@ module ALU (
 		// AUIPC
 		else if (opcode == 7'b0010111)
 		begin
-			rd_val = PC + (imm << 12);
+			rd_val = (PC + imm) << 12;  // rd_val = PC + (imm << 12);  // still not working
 			
 		
 		end
@@ -244,4 +244,3 @@ module ALU (
 	end
 
 endmodule
-	
