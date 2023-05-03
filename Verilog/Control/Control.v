@@ -624,21 +624,21 @@ module Control(
 					else if (opcode == 7'b1101111)
 					begin
 						rd_val <= PC + 8'd1;
-						PC <= PC + imm[7:0];
+						PC <= PC + imm[7:0];  // {{20{imm[11]}}, imm} if not doing [7:0]
 					end
 					
 					// JALR
 					else if (opcode == 7'b1100111)
 					begin
 						rd_val <= PC + 8'd1;
-						PC <= (rs1_val + imm) & 32'hfffffffe;
+						PC <= (rs1_val + {{20{imm[11]}}, imm});  // (rs1_val + {{20{imm[11]}}, imm}) & 32'hfffffffe;
 					end
 					
 					// SW
 					if (opcode == 7'b0100011)
 					begin
 						main_mem_wren <= 1'b1;  // test if adding line to LW
-						main_mem_address <= rs1 + imm;
+						main_mem_address <= rs1 + {{20{imm[11]}}, imm};
 						main_mem_input <= rs2_val;
 					end
 					
@@ -646,7 +646,7 @@ module Control(
 					if (opcode == 7'b0000011)
 					begin
 						main_mem_wren <= 1'b0;  // test if removing this line in writeback
-						main_mem_address <= rs1 + imm;
+						main_mem_address <= rs1 + {{20{imm[11]}}, imm};
 					end
 					
 					// branches
@@ -655,11 +655,11 @@ module Control(
 						
 						// BEQ
 						if (funct3 == 3'b000)
-							PC <= (rs1_val == rs2_val)? PC + imm : PC + 8'd1;
+							PC <= (rs1_val == rs2_val)? PC + {{20{imm[11]}}, imm} : PC + 8'd1;
 						
 						// BNE
 						if (funct3 == 3'b001)
-							PC <= (rs1_val != rs2_val)? PC + imm : PC + 8'd1;
+							PC <= (rs1_val != rs2_val)? PC + {{20{imm[11]}}, imm} : PC + 8'd1;
 						
 						// BLT - SIGNED
 						if (funct3 == 3'b100)
@@ -667,11 +667,11 @@ module Control(
 							//PC <= (rs1_val < rs2_val)? PC + imm : PC + 8'd1;
 							
 							if (rs1_val[31] == 1'b1 && rs2_val[31] == 1'b0)
-								PC <= PC + imm;
+								PC <= PC + {{20{imm[11]}}, imm};
 							else if (rs1_val[31] == 1'b0 && rs1_val[31] == 1'b1)
 								PC <= PC + 8'd1;
 							else if (rs1 < rs2)
-								PC <= PC + imm;
+								PC <= PC + {{20{imm[11]}}, imm};
 						end
 						
 						// BGE - SIGNED
@@ -682,18 +682,18 @@ module Control(
 							if (rs1_val[31] == 1'b1 && rs2_val[31] == 1'b0)
 								PC <= PC + 8'd1;
 							else if (rs1_val[31] == 1'b0 && rs1_val[31] == 1'b1)
-								PC <= PC + imm;
+								PC <= PC + {{20{imm[11]}}, imm};
 							else if (rs1 >= rs2)
-								PC <= PC + imm;
+								PC <= PC + {{20{imm[11]}}, imm};
 						end	
 						
 						// BLTU - UNSIGNED
 						if (funct3 == 3'b110)
-							PC <= (rs1_val < rs2_val)? PC + imm : PC + 8'd1;
+							PC <= (rs1_val < rs2_val)? PC + {{20{imm[11]}}, imm} : PC + 8'd1;
 						
 						// BGEU - UNSIGNED
 						if (funct3 == 3'b111)
-							PC <= (rs1_val >= rs2_val)? PC + imm : PC + 8'd1;
+							PC <= (rs1_val >= rs2_val)? PC + {{20{imm[11]}}, imm} : PC + 8'd1;
 							
 					end
 					
