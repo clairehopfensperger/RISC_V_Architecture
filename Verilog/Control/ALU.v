@@ -111,7 +111,14 @@ module ALU (
 						rd_val = 32'd0;
 						
 					else 
-						rd_val = (rs1 < rs2);  // haven't tested
+					begin
+						// rd_val = (rs1 < rs2);
+						
+						if (rs1 < rs2)
+							rd_val = 32'd1;
+						else
+							rd_val = 32'd0;
+					end
 				
 				end
 				
