@@ -637,16 +637,16 @@ module Control(
 					// SW
 					if (opcode == 7'b0100011)
 					begin
-						main_mem_wren <= 1'b1;  // test if adding line to LW
-						main_mem_address <= rs1 + {{20{imm[11]}}, imm};
+						main_mem_wren <= 1'b1;
+						main_mem_address <= rs1_val + {{20{imm[11]}}, imm};
 						main_mem_input <= rs2_val;
 					end
 					
 					// LW
 					if (opcode == 7'b0000011)
 					begin
-						main_mem_wren <= 1'b0;  // test if removing this line in writeback
-						main_mem_address <= rs1 + {{20{imm[11]}}, imm};
+						main_mem_wren <= 1'b0;
+						main_mem_address <= rs1_val + {{20{imm[11]}}, imm};
 					end
 					
 					// branches
