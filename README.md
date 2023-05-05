@@ -111,6 +111,27 @@ The goal of this project is to explore a non-traditional computer architecture a
   - result_t5: holds the resulting number from result_t4 at the end of the program <br>
 <br>
 
+### Test 4: Big Test
+This test covered the rest of the instructions not already covered in the previous 3 tests.
+
+- Assembly program: [big_test.asm](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Benchmarks/big_test.asm)
+- Spreadsheet: 
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/bigtestsheet1.png" width=750><br>
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/bigtestsheet2.png" width=750>
+  </p>
+- Mif file: [big_test.mif](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Verilog/Control/big_test.mif)
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/bigtestmif.png" width=500>
+  </p>
+- ModelSim:
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/bigtestmodelsim.png" width=1250>
+  </p>
+  - result_t0: holds the iterating number used in the for loop and inside if statements to determine which option to execute <br>
+  - result_t1 - result_t6: hold values for all of the different operations executed throughout the program <br>
+<br>
+
 ## Resources:
 - [RARS](https://github.com/TheThirdOne/rars)
 - [Tiny RISC-V ISA](https://www.csl.cornell.edu/courses/ece5745/handouts/ece5745-tinyrv-isa.txt)
