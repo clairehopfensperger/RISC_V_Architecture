@@ -38,7 +38,7 @@ module Control(
 	reg [4:0]rs1, rs2, rd;
 	reg [31:0]rs1_val, rs2_val;
 	wire [31:0]ALU_rd_val;
-	reg [32:0]imm;
+	reg [31:0]imm;
 	reg [6:0]funct7;
 	reg [2:0]funct3;
 	reg [6:0]opcode;
