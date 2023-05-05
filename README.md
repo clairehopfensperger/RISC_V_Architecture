@@ -70,6 +70,25 @@ The goal of this project is to explore a non-traditional computer architecture a
   - result_t5: holds the total count of 1s at the end of the program <br>
 <br>
 
+### Test 2: Five Factorial
+- Assembly program: [factorial.asm](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Benchmarks/factorial.asm)
+- Spreadsheet: 
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/factorialsheet.png" width=750>
+  </p>
+- Mif file: [factorial.mif](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Verilog/Control/factorial.mif)
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/factorialmif.png" width=500>
+  </p>
+- ModelSim:
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/factorialmodelsim.png" width=1250>
+  </p>
+  - result_t0: holds the factorial number being multiplied from each iteration <br>
+  - result_t1: holds the number multiplying into the factorial number <br>
+  - result_t2: holds the final factorial at the end of the program <br>
+<br>
+
 ## Resources:
 - [RARS](https://github.com/TheThirdOne/rars)
 - [Tiny RISC-V ISA](https://www.csl.cornell.edu/courses/ece5745/handouts/ece5745-tinyrv-isa.txt)
