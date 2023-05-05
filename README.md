@@ -25,18 +25,19 @@ Regarding last step:
 <br>
 
 ## What I'm Working On Now:
-- Creating [Control module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/Control) in verilog
-- Editing [ALU module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/ALU) in verilog
-- Updating [spreadsheet](https://docs.google.com/spreadsheets/d/1bzJ4BtNq0zZRE7lfEwL_Z8MmB-xBc6bV8E7DlgN-na4/edit#gid=0) as I implement more instructions
-- Making test cases and fixing verilog program as needed
+- Demoing project to professor on Friday, May 5th at 8:30 AM woooooooo
 <br>
 
 ## What I've Done So Far:
-- Read through the Tiny RISC-V ISA and worked to understand it
+- Read through the [Tiny RISC-V ISA](https://www.csl.cornell.edu/courses/ece5745/handouts/ece5745-tinyrv-isa.txt) and worked to understand it
 - Created assembly [benchmarks](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Benchmarks) to test all the Tiny RISC-V instructions
 - Created [spreadsheet](https://docs.google.com/spreadsheets/d/1bzJ4BtNq0zZRE7lfEwL_Z8MmB-xBc6bV8E7DlgN-na4/edit#gid=0) to keep track of instructions I need to implement
 - Created [ALU module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/ALU) in verilog
 - Created [Register module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/Register) in verilog
+- Created [Control module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/Control) in verilog
+- Edited [ALU module](https://github.com/clairehopfensperger/Hardware_Implementation/tree/main/Verilog/ALU) in verilog
+- Updated my [master project spreadsheet](https://docs.google.com/spreadsheets/d/1bzJ4BtNq0zZRE7lfEwL_Z8MmB-xBc6bV8E7DlgN-na4/edit#gid=0) as I implement more instructions
+- Made test cases (documented on this [google spreadsheet](https://docs.google.com/spreadsheets/d/1_VlJCmFiX_xoZ7EFGFTkr8dYosKgxOKVg-J6vm1NmeM/edit#gid=0)) and fixing verilog program as needed
 <br>
 
 ## Resources:
