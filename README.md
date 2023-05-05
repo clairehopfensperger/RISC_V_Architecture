@@ -38,6 +38,15 @@ The goal of this project is to explore a non-traditional computer architecture a
 10. Demoed my architecture to my professor
 <br>
 
+## How I Tested My Architecture
+
+### Process:
+1. Created RISC-V assembly benchmark on RARS
+2. Put the instructions in a [google spreadsheet](https://docs.google.com/spreadsheets/d/1_VlJCmFiX_xoZ7EFGFTkr8dYosKgxOKVg-J6vm1NmeM/edit#gid=0) and coverted the encoding hex numbers to decimal
+3. Put the decimal instructions into a .mif file
+4. Ran ModelSim using the testbench [tb_control.v](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Verilog/Control/tb_control.v)
+5. Verified the ModelSim results match the RARS results
+
 ## Resources:
 - [RARS](https://github.com/TheThirdOne/rars)
 - [Tiny RISC-V ISA](https://www.csl.cornell.edu/courses/ece5745/handouts/ece5745-tinyrv-isa.txt)
