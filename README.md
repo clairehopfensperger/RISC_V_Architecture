@@ -89,6 +89,28 @@ The goal of this project is to explore a non-traditional computer architecture a
   - result_t2: holds the final factorial at the end of the program <br>
 <br>
 
+### Test 3: Store Word/Load Word
+- Assembly program: [sw_lw.asm](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Benchmarks/sw_lw.asm)
+- Spreadsheet: 
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/swlwsheet.png" width=750>
+  </p>
+- Mif file: [sw_lw.mif](https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Verilog/Control/sw_lw.mif)
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/swlwmif.png" width=500>
+  </p>
+- ModelSim:
+  <p align="center">
+    <img src="https://github.com/clairehopfensperger/Hardware_Implementation/blob/main/Images/swlwmodelsim.png" width=1250>
+  </p>
+  - result_t0: holds the number (3) being used as a condition in the while loops <br>
+  - result_t1: holds the number (1) being used in sub because there was no subi (subtract immediate) in the Tiny RISC-V ISA <br>
+  - result_t2: holds the changing number that is to be stored into and loaded from main memory <br>
+  - result_t3: holds holds the numbers being loaded from main memory <br>
+  - result_t4: holds the number which has the loaded numbers subtracted from it <br>
+  - result_t5: holds the resulting number from result_t4 at the end of the program <br>
+<br>
+
 ## Resources:
 - [RARS](https://github.com/TheThirdOne/rars)
 - [Tiny RISC-V ISA](https://www.csl.cornell.edu/courses/ece5745/handouts/ece5745-tinyrv-isa.txt)
