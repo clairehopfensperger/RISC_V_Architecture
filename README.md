@@ -38,6 +38,39 @@ The goal of this project is to explore a non-traditional computer architecture a
 10. Demoed my architecture to my professor
 <br>
 
+## Project Overview
+
+### Modules:
+
+#### Control.v
+- Top module
+- Holds FSM that controls entire program
+- Reads in 32 bit instruction and executes whatever the instruction intends for
+<br>
+
+#### ALU.v
+- Arithmetic logic unit
+- Completes different arithmetic functions based on input encodings
+<br>
+
+#### Register.v
+- Simple register module
+<br>
+
+#### tb_control.v
+- Testbench for project
+<br>
+
+#### instructions_mem.v
+- On-chip 1 port RAM memory used to hold the input instructions for the program
+<br>
+
+#### main_mem.v
+- On-chip 1 port RAM memory used as main memory that can be written to and read from
+<br>
+
+<br>
+
 ## How I Tested My Architecture
 
 ### Process:
