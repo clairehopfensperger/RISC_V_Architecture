@@ -1,4 +1,4 @@
-<h1 align = "center">Architecture Hardware Implementation</h1>
+<h1 align = "center">RISC-V Architecture Implementation</h1>
 
 ## Objective
 The goal of this project is to explore a non-traditional computer architecture and implement a program or benchmark on an FPGA.
